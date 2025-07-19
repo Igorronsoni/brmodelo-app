@@ -1,0 +1,39 @@
+////////////////////////////////////////////////////////////////////////////////
+// Component base
+////////////////////////////////////////////////////////////////////////////////
+.cmd-editor {
+	display: flex;
+  flex-direction: row;
+	width: 300px;
+	height: calc(100vh - 35px);
+  max-height: 100vh;
+	padding-bottom: 48px;
+}
+
+.my-code-mirror {
+  width: 300px !important;
+  height: 100% !important;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  font-family: monospace;
+  font-size: 14px;
+  border: none;
+  outline: none;
+}
+
+.my-code-mirror .CodeMirror-scroll {
+  background: #1e1e1e !important;
+  color: #d4d4d4 !important;
+  padding: 10px !important;
+  font-family: monospace;
+  font-size: 14px;
+}
+
+.my-code-mirror .CodeMirror-gutters {
+  background: #1e1e1e;
+  border: none;
+}
+
+.my-code-mirror .CodeMirror-cursor {
+  border-left: 1px solid #d4d4d4;
+}

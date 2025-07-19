@@ -31,6 +31,7 @@ import ToolsViewService from "../service/toolsViewService";
 import preventExitServiceModule from "../service/preventExitService";
 import iconConceptual from  "../components/icons/conceptual";
 import supportBannersList from "../components/supportBannersList";
+import textEditor from "../components/textEditor";
 
 const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibModal, $state, $transitions, preventExitService, $filter) {
 	const ctrl = this;
@@ -529,20 +530,22 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
 
 		configs.editorActions = new joint.ui.EditorActions({ graph: configs.graph, paper: configs.paper });
 
-		$(".elements-holder").append(enditorManager.render().el);
+		$(".tab-content-elements").append(enditorManager.render().el);
 
 		configs.elementSelector = new joint.ui.ElementSelector({ paper: configs.paper, graph: configs.graph, model: new Backbone.Collection });
 
-		const note = new joint.shapes.custom.Note({ position: { x: 25, y: 430 } });
+		const note = new joint.shapes.custom.Note({ position: { x: 100, y: 430 } });
 
 		enditorManager.loadElements([
-			ctrl.shapeFactory.createEntity({ position: { x: 25, y: 10 } }),
-			ctrl.shapeFactory.createIsa({ position: { x: 40, y: 70 } }),
-			ctrl.shapeFactory.createRelationship({ position: { x: 25, y: 130 } }),
-			ctrl.shapeFactory.createAssociative({ position: { x: 15, y: 185 } }),
-			ctrl.shapeFactory.createAttribute({ position: { x: 65, y: 265 } }),
-			ctrl.shapeFactory.createKey({ position: { x: 65, y: 305 } }),
-			ctrl.shapeFactory.createComposedAttribute({ position: { x: 30, y: 345 } }),
+			ctrl.shapeFactory.createEntity({ position: { x: 100, y: 10 } }),
+			ctrl.shapeFactory.createIsa({ position: { x: 115, y: 70 } }),
+			ctrl.shapeFactory.createRelationship({ position: { x: 100, y: 130 } }),
+			ctrl.shapeFactory.createAssociative({ position: { x: 90, y: 185 } }),
+			ctrl.shapeFactory.createAttribute({ position: { x: 145, y: 265 } }),
+			ctrl.shapeFactory.createKey({ position: { x: 145, y: 305 } }),
+			ctrl.shapeFactory.createComposedAttribute({
+				position: { x: 105, y: 345 },
+			}),
 			note
 		]);
 
@@ -560,6 +563,7 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
 		ctrl.entityExtensor = new EntityExtensor(ctrl.shapeFactory, ctrl.shapeValidator, ctrl.shapeLinker);
 		ctrl.toolsViewService = new ToolsViewService();
 		ctrl.setLoading(true);
+    ctrl.activeTab = "textEditor";
 		ModelAPI.getModel($stateParams.modelid, $rootScope.loggeduser).then((resp) => {
 			const jsonModel = (typeof resp.data.model == "string") ? JSON.parse(resp.data.model) : resp.data.model;
 			ctrl.model = resp.data;
@@ -602,7 +606,8 @@ export default angular
 		statusBar,
 		shareModelModal,
 		iconConceptual,
-		supportBannersList
+		supportBannersList,
+    textEditor
 	])
 	.component("editorConceptual", {
 		template,

@@ -5,7 +5,7 @@ import Column from "../service/Column";
 const Controller = function (LogicService, $rootScope, $timeout) {
 	const $ctrl = this;
 
-	$ctrl.visible = true;
+	$ctrl.visible = false;
 	$ctrl.views = [];
 
 	$ctrl.sections = {

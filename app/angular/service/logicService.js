@@ -166,7 +166,7 @@ const logicService = ($rootScope, ModelAPI, LogicFactory, LogicConversorService)
 		enditorManager.loadElements([
 			LogicFactory.createTable(),
 			LogicFactory.createView(),
-			new joint.shapes.custom.Note({ position: { x: 20, y: 290 } })
+			new joint.shapes.custom.Note({ position: { x: 95, y: 290 } })
 		]);
 	}
 

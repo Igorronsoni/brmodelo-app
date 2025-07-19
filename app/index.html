@@ -1,18 +1,32 @@
-<!DOCTYPE html>
+<!doctype html>
 <html ng-app="app">
 	<head lang="en">
-		<meta charset="UTF-8">
+		<meta charset="UTF-8" />
 		<title ng-bind="title">BRMW</title>
 		<!-- Global site tag (gtag.js) - Google Analytics -->
-		<script async src="https://www.googletagmanager.com/gtag/js?id=G-NQ9Z9PV306"></script>
+		<script
+			async
+			src="https://www.googletagmanager.com/gtag/js?id=G-NQ9Z9PV306"
+		></script>
 		<script>
 			window.dataLayer = window.dataLayer || [];
-			function gtag(){
+			function gtag() {
 				dataLayer.push(arguments);
 			}
 		</script>
+		<!-- CodeMirror CSS -->
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css"
+		/>
+
+		<!-- CodeMirror JS -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+
+		<!-- Mode para javascript, por exemplo -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
 	</head>
-	<body >
+	<body>
 		<ui-view></ui-view>
 	</body>
 </html>
