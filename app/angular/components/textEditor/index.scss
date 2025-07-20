@@ -1,3 +1,5 @@
+@import "codemirror/lib/codemirror.css";
+
 ////////////////////////////////////////////////////////////////////////////////
 // Component base
 ////////////////////////////////////////////////////////////////////////////////
@@ -36,4 +38,18 @@
 
 .my-code-mirror .CodeMirror-cursor {
   border-left: 1px solid #d4d4d4;
+}
+
+.my-code-mirror .cm-keyword {
+  color: var(--brand-primary-30) !important;
+  font-weight: bold;
+}
+
+.my-code-mirror .cm-atom {
+  color: var(--accent-dark) !important;
+}
+
+.my-code-mirror .cm-comment {
+  color: var(--gray-50) !important;
+  font-style: italic;
 }

@@ -32,9 +32,11 @@ import preventExitServiceModule from "../service/preventExitService";
 import iconConceptual from  "../components/icons/conceptual";
 import supportBannersList from "../components/supportBannersList";
 import textEditor from "../components/textEditor";
+import tokens from './language/tokens';
 
 const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibModal, $state, $transitions, preventExitService, $filter) {
 	const ctrl = this;
+  ctrl.languageTokens = tokens;
 	ctrl.modelState = {
 		isDirty: false,
 		updatedAt: new Date(),

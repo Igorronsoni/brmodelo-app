@@ -1,3 +1,8 @@
 <div class="cmd-editor">
-	<code-mirror ng-model="meuTexto" mode="javascript" theme="default" />
+	<code-mirror
+		ng-model="$ctrl.cmdText"
+		mode="$ctrl.modeToUse"
+		theme="default"
+		on-change="$ctrl.onCmdChange()"
+	/>
 </div>
