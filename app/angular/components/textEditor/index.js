@@ -4,12 +4,13 @@ import codeMirror from "./codeMirror";
 import CodeMirror from "codemirror";
 import "codemirror/addon/mode/simple.js";
 import "./index.scss";
+const nearley = require("nearley");
 
 const textEditor = function ($scope, $timeout) {
 	this.cmdText = "";
 	let debounceTimeout = null;
-	
-  this.$onInit = () => {
+
+	this.$onInit = () => {
 		this.modeName = "customMode_" + Math.random().toString(36).substr(2, 5);
 
 		const tokens = Array.isArray(this.tokens) ? this.tokens : [];
@@ -22,6 +23,15 @@ const textEditor = function ($scope, $timeout) {
 				}))
 				.concat([
 					{
+						regex: /\/\/.*/,
+						token: "comment",
+					},
+					{
+						regex: /\/\*/,
+						token: "comment",
+						next: "commentBlock",
+					},
+					{
 						regex: /\s+/,
 						token: null,
 					},
@@ -30,25 +40,55 @@ const textEditor = function ($scope, $timeout) {
 						token: null,
 					},
 				]),
+
+			commentBlock: [
+				{
+					regex: /.*?\*\//,
+					token: "comment",
+					next: "start",
+				},
+				{
+					regex: /.*/,
+					token: "comment",
+				},
+			],
 		});
+
+		if (this.grammar) {
+			try {
+				this.myGrammar = nearley.Grammar.fromCompiled(this.grammar);
+				this.lexer = this.myGrammar.lexer;
+			} catch (e) {
+				console.error("Erro ao carregar o grammar:", e.message);
+			}
+		}
 
 		this.modeToUse = this.modeName;
 	};
 
 	this.onCmdChange = function () {
 		if (debounceTimeout) {
-      $timeout.cancel(debounceTimeout);
-    }
+			$timeout.cancel(debounceTimeout);
+		}
 
-    debounceTimeout = $timeout(() => {
-      this.interpret(this.cmdText);
-    }, 1000);
+		debounceTimeout = $timeout(() => {
+			if (this.interpreter && this.grammar) {
+				let result = null;
+        let error = false
+				try {
+					const parser = new nearley.Parser(this.myGrammar, {
+						lexer: this.lexer,
+					});
+					parser.feed(this.cmdText);
+					result = parser.results;
+				} catch (e) {
+					result = null;
+          error = true;
+				}
+				return this.interpreter(result, error);
+			}
+		}, 1000);
 	};
-
-  this.interpret = function(code) {
-    console.log("Interpretando código:", code);
-  };
-
 };
 textEditor.$inject = ["$scope", "$timeout"];
 
@@ -59,5 +99,7 @@ export default angular
 		controller: textEditor,
 		bindings: {
 			tokens: "<",
+			interpreter: "<",
+			grammar: "<",
 		},
 	}).name;

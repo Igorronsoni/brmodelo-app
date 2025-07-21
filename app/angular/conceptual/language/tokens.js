@@ -1,16 +1,16 @@
 const tokens = [
+	{
+		regex: /\bentity\b/,
+		token: "keyword",
+	},
   {
-    regex: "\\bentity\\b",
-    token: "keyword"
-  },
-  {
-    regex: "\\bPK\\b",
-    token: "atom"
-  },
-  {
-    regex: "//.*",
-    token: "comment"
-  },
+		regex: /\brel\b/,
+		token: "keyword",
+	},
+	{
+		regex: /\bID\b/,
+		token: "atom",
+	}
 ];
 
 export default tokens;

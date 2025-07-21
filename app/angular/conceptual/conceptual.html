@@ -35,7 +35,11 @@
 
 			<div class="tab-content">
 				<div class="tab-content-textEditor" ng-show="$ctrl.activeTab === 'textEditor'">
-					<text-editor tokens="$ctrl.languageTokens" />
+					<text-editor 
+            tokens="$ctrl.languageTokens" 
+            interpreter="$ctrl.interpreter"
+            grammar="$ctrl.grammar"
+          />
 				</div>
 
 				<section
