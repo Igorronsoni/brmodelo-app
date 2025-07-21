@@ -11,9 +11,14 @@ function id(x) { return x[0]; }
         WHITESPACE:     { match: /\s+/, lineBreaks: true },
         ENTITY:         "entity",
         REL:            "rel",
+        NOTE:            "note",
         ID:             "ID",
         COMPOSED:       "COMPOSED",
         IDENTIFIER:     /[a-zA-Z_][a-zA-Z0-9_]*/,
+        STRING:         {
+                          match: /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/,
+                          value: x => x.substring(1, x.length - 1)
+                        },
         "{":            "{",
         "}":            "}",
         "[":            "[",
@@ -42,17 +47,32 @@ var grammar = {
     {"name": "main", "symbols": [], "postprocess": () => []},
     {"name": "declaration", "symbols": ["entity_command"], "postprocess": id},
     {"name": "declaration", "symbols": ["rel_command"], "postprocess": id},
+    {"name": "declaration", "symbols": ["note_command"], "postprocess": id},
     {"name": "entity_command", "symbols": [(lexer.has("ENTITY") ? {type: "ENTITY"} : ENTITY), "_", (lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", "optional_attributes_block"], "postprocess":  ([_, _1, name, _2, attrs_block]) => ({
         type: "entity",
         name: name.value,
         attributes: attrs_block,
         loc: { line: name.line, col: name.col, offset: name.offset } }) },
     {"name": "rel_command", "symbols": [(lexer.has("REL") ? {type: "REL"} : REL), "_", (lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", {"literal":">"}, "_", (lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", {"literal":";"}], "postprocess":  ([_, _1, fromEntity, _2, _3, _4, toEntity, _5, _6]) => ({
-            type: "rel",
+            type: "relationship",
             from: fromEntity.value,
             to: toEntity.value,
             loc: { line: fromEntity.line, col: fromEntity.col, offset: fromEntity.offset } 
         }) },
+    {"name": "note_command", "symbols": [(lexer.has("NOTE") ? {type: "NOTE"} : NOTE), "_", (lexer.has("STRING") ? {type: "STRING"} : STRING), "_", (lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", {"literal":";"}], "postprocess":  ([_, _1, string, _2, color, _3, _4]) => ({
+            type: "note",
+            value: string.value,
+            color: color.value,
+            loc: { line: string.line, col: string.col, offset: string.offset }
+        }) },
+    {"name": "note_command", "symbols": [(lexer.has("NOTE") ? {type: "NOTE"} : NOTE), "_", (lexer.has("STRING") ? {type: "STRING"} : STRING), "_", "optional_color"], "postprocess":  ([_, _1, string, _2, colorInfo]) => ({
+            type: "note",
+            value: string.value,
+            color: colorInfo.color,
+            loc: { line: string.line, col: string.col, offset: string.offset }
+        }) },
+    {"name": "optional_color", "symbols": [(lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", {"literal":";"}], "postprocess": ([color, _, _1]) => ({ color: color.value })},
+    {"name": "optional_color", "symbols": [{"literal":";"}], "postprocess": () => ({ color: null })},
     {"name": "optional_attributes_block", "symbols": [{"literal":"{"}, "_", "attributes", "_", {"literal":"}"}], "postprocess": ([_, _1, attrs, _2, _3]) => attrs},
     {"name": "optional_attributes_block", "symbols": [{"literal":";"}], "postprocess": () => []},
     {"name": "attributes", "symbols": ["attribute_item"], "postprocess": ([a]) => [a]},

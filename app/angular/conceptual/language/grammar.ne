@@ -5,7 +5,7 @@ main -> declaration (_ declaration):*   {% ([first, rest]) => [first, ...rest.ma
 
 declaration -> entity_command   {% id %}
              | rel_command      {% id %}
-
+             | note_command      {% id %}
 # COMMANDS
 entity_command -> %ENTITY _ %IDENTIFIER _ optional_attributes_block {% ([_, _1, name, _2, attrs_block]) => ({
     type: "entity",
@@ -19,6 +19,21 @@ rel_command -> %REL _ %IDENTIFIER _ ">" _ %IDENTIFIER _ ";"   {% ([_, _1, fromEn
                                                                   to: toEntity.value,
                                                                   loc: { line: fromEntity.line, col: fromEntity.col, offset: fromEntity.offset } 
                                                               }) %}
+
+note_command -> %NOTE _ %STRING _ %IDENTIFIER _ ";" {% ([_, _1, string, _2, color, _3, _4]) => ({
+                                        type: "note",
+                                        value: string.value,
+                                        color: color.value,
+                                        loc: { line: string.line, col: string.col, offset: string.offset }
+                                    }) %}
+
+note_command -> %NOTE _ %STRING _ optional_color {% ([_, _1, string, _2, colorInfo]) => ({
+                                        type: "note",
+                                        value: string.value,
+                                        color: colorInfo.color,
+                                        loc: { line: string.line, col: string.col, offset: string.offset }
+                                    }) %}
+
 # RULES - ENTITY
 optional_attributes_block -> "{" _ attributes _ "}" {% ([_, _1, attrs, _2, _3]) => attrs %}
                            | ";"                    {% () => [] %}
@@ -76,6 +91,9 @@ composed_attribute_composed -> %IDENTIFIER _ COMPOSED_designator  {% ([name, _, 
 
 # RULES - RELATIONSHIP
 
+# RULES - NOTE
+optional_color -> %IDENTIFIER _ ";"   {% ([color, _, _1]) => ({ color: color.value }) %}
+                | ";"                 {% () => ({ color: null }) %}
 
 # RULES - COMMON
 optional_semicolon -> ";"   {% () => null %}
@@ -92,9 +110,14 @@ _ -> %WHITESPACE:*  {% () => null %}
         WHITESPACE:     { match: /\s+/, lineBreaks: true },
         ENTITY:         "entity",
         REL:            "rel",
+        NOTE:            "note",
         ID:             "ID",
         COMPOSED:       "COMPOSED",
         IDENTIFIER:     /[a-zA-Z_][a-zA-Z0-9_]*/,
+        STRING:         {
+                          match: /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/,
+                          value: x => x.substring(1, x.length - 1)
+                        },
         "{":            "{",
         "}":            "}",
         "[":            "[",
