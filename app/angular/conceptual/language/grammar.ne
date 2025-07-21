@@ -14,12 +14,12 @@ entity_command -> %ENTITY _ %IDENTIFIER _ optional_attributes_block {% ([_, _1, 
     loc: { line: name.line, col: name.col, offset: name.offset } }) %}
 
 rel_command -> %REL _ %IDENTIFIER _ ">" _ %IDENTIFIER _ ";"   {% ([_, _1, fromEntity, _2, _3, _4, toEntity, _5, _6]) => ({
-                                                                  type: "rel",
+                                                                  type: "relationship",
                                                                   from: fromEntity.value,
                                                                   to: toEntity.value,
                                                                   loc: { line: fromEntity.line, col: fromEntity.col, offset: fromEntity.offset } 
                                                               }) %}
-# SEMI FUNCTIONS
+# RULES - ENTITY
 optional_attributes_block -> "{" _ attributes _ "}" {% ([_, _1, attrs, _2, _3]) => attrs %}
                            | ";"                    {% () => [] %}
 
@@ -74,6 +74,10 @@ composed_attribute_composed -> %IDENTIFIER _ COMPOSED_designator  {% ([name, _, 
                                                                       loc: { line: name.line, col: name.col, offset: name.offset }
                                                                   }) %}
 
+# RULES - RELATIONSHIP
+
+
+# RULES - COMMON
 optional_semicolon -> ";"   {% () => null %}
                     | null  {% () => null %}
 
