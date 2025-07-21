@@ -10,6 +10,10 @@ const tokens = [
 	{
 		regex: /\bID\b/,
 		token: "atom",
+	},
+  {
+		regex: />/,
+		token: "keyword",
 	}
 ];
 

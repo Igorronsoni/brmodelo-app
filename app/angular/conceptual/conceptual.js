@@ -602,8 +602,8 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
 		onExitDeregister()
 	}
 
-  this.interpreter = function (ast, error) {
-    console.log("tetste", ast, error)
+  this.interpreter = function (result) {
+    console.log(result)
     return { success: true };
   };
 

@@ -7,7 +7,7 @@ import "./index.scss";
 const nearley = require("nearley");
 
 const textEditor = function ($scope, $timeout) {
-	this.cmdText = "";
+	this.text = "";
 	let debounceTimeout = null;
 
 	this.$onInit = () => {
@@ -66,7 +66,7 @@ const textEditor = function ($scope, $timeout) {
 		this.modeToUse = this.modeName;
 	};
 
-	this.onCmdChange = function () {
+	this.onChange = function () {
 		if (debounceTimeout) {
 			$timeout.cancel(debounceTimeout);
 		}
@@ -74,18 +74,16 @@ const textEditor = function ($scope, $timeout) {
 		debounceTimeout = $timeout(() => {
 			if (this.interpreter && this.grammar) {
 				let result = null;
-        let error = false
 				try {
 					const parser = new nearley.Parser(this.myGrammar, {
 						lexer: this.lexer,
 					});
-					parser.feed(this.cmdText);
-					result = parser.results;
+					parser.feed(this.text);
+					result = { data: parser.results, error: false };
 				} catch (e) {
-					result = null;
-          error = true;
+          result = { data: null, error: true };
 				}
-				return this.interpreter(result, error);
+				return this.interpreter(result);
 			}
 		}, 1000);
 	};

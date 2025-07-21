@@ -34,7 +34,7 @@ const codeMirror = angular
 					);
 
 					const editor = CodeMirror.fromTextArea(textarea, config);
-					editor.getWrapperElement().classList.add("my-code-mirror");
+					editor.getWrapperElement().classList.add("code-mirror");
 
 					$timeout(() => {
 						editor.refresh();

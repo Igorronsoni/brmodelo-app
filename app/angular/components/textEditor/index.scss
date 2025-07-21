@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Component base
 ////////////////////////////////////////////////////////////////////////////////
-.cmd-editor {
+.text-editor {
 	display: flex;
   flex-direction: row;
 	width: 300px;
@@ -12,7 +12,7 @@
 	padding-bottom: 48px;
 }
 
-.my-code-mirror {
+.code-mirror {
   width: 300px !important;
   height: 100% !important;
   background: #1e1e1e;
@@ -23,7 +23,7 @@
   outline: none;
 }
 
-.my-code-mirror .CodeMirror-scroll {
+.code-mirror .CodeMirror-scroll {
   background: #1e1e1e !important;
   color: #d4d4d4 !important;
   padding: 10px !important;
@@ -31,25 +31,29 @@
   font-size: 14px;
 }
 
-.my-code-mirror .CodeMirror-gutters {
+.code-mirror .CodeMirror-gutters {
   background: #1e1e1e;
   border: none;
 }
 
-.my-code-mirror .CodeMirror-cursor {
+.code-mirror .CodeMirror-cursor {
   border-left: 1px solid #d4d4d4;
 }
 
-.my-code-mirror .cm-keyword {
+.code-mirror .cm-keyword {
   color: var(--brand-primary-30) !important;
   font-weight: bold;
 }
 
-.my-code-mirror .cm-atom {
-  color: var(--accent-dark) !important;
+.code-mirror .cm-atom {
+  color: var(--highlight-dark) !important;
 }
 
-.my-code-mirror .cm-comment {
+.code-mirror .cm-comment {
   color: var(--gray-50) !important;
   font-style: italic;
+}
+
+.text-editor .CodeMirror-selected {
+  background: var(--brand-primary-10);
 }
