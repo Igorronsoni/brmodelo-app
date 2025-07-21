@@ -12,6 +12,10 @@ const tokens = [
 		token: "atom",
 	},
   {
+		regex: /\bCOMPOSED\b/,
+		token: "atom",
+	},
+  {
 		regex: />/,
 		token: "keyword",
 	}

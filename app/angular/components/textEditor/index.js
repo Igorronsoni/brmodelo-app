@@ -79,7 +79,7 @@ const textEditor = function ($scope, $timeout) {
 						lexer: this.lexer,
 					});
 					parser.feed(this.text);
-					result = { data: parser.results, error: false };
+					result = { data: parser.results[0], error: false };
 				} catch (e) {
           result = { data: null, error: true };
 				}

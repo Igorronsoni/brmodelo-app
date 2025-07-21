@@ -41,13 +41,13 @@ var grammar = {
     {"name": "main", "symbols": [], "postprocess": () => []},
     {"name": "declaration", "symbols": ["entity_command"], "postprocess": id},
     {"name": "declaration", "symbols": ["rel_command"], "postprocess": id},
-    {"name": "entity_command", "symbols": [(lexer.has("ENTITY") ? {type: "ENTITY"} : ENTITY), "_", (lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", "optional_attributes_block", "_", {"literal":";"}], "postprocess":  ([_, _1, name, _2, attrs_block, _3, _4]) => ({
+    {"name": "entity_command", "symbols": [(lexer.has("ENTITY") ? {type: "ENTITY"} : ENTITY), "_", (lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", "optional_attributes_block"], "postprocess":  ([_, _1, name, _2, attrs_block, _3, _4]) => ({
             type: "entity",
             name: name.value,
             attributes: attrs_block
         }) },
     {"name": "optional_attributes_block", "symbols": [{"literal":"{"}, "_", "attributes", "_", {"literal":"}"}], "postprocess": ([_, _1, attrs, _2, _3]) => attrs},
-    {"name": "optional_attributes_block", "symbols": [], "postprocess": () => []},
+    {"name": "optional_attributes_block", "symbols": [{"literal":";"}], "postprocess": () => []},
     {"name": "attributes", "symbols": ["attribute"], "postprocess": ([a]) => [a]},
     {"name": "attributes", "symbols": ["attributes", "_", {"literal":";"}, "_", "attribute"], "postprocess": ([as, _, _1, _2, a]) => [...as, a]},
     {"name": "attributes", "symbols": ["attributes", "_", {"literal":";"}, "_"], "postprocess": ([as, _, _1, _2]) => as},

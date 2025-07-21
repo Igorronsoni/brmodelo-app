@@ -6,14 +6,14 @@ main -> declaration (_ declaration):* {% ([first, rest]) => [first, ...rest.map(
 declaration -> entity_command {% id %}
              | rel_command {% id %}
 
-entity_command -> %ENTITY _ %IDENTIFIER _ optional_attributes_block _ ";" {% ([_, _1, name, _2, attrs_block, _3, _4]) => ({
+entity_command -> %ENTITY _ %IDENTIFIER _ optional_attributes_block {% ([_, _1, name, _2, attrs_block, _3, _4]) => ({
     type: "entity",
     name: name.value,
     attributes: attrs_block
 }) %}
 
 optional_attributes_block -> "{" _ attributes _ "}" {% ([_, _1, attrs, _2, _3]) => attrs %}
-                           | null {% () => [] %}
+                           | ";" {% () => [] %}
 
 attributes -> attribute {% ([a]) => [a] %}
             | attributes _ ";" _ attribute {% ([as, _, _1, _2, a]) => [...as, a] %}
