@@ -1,56 +1,102 @@
 @lexer lexer
 
-main -> declaration (_ declaration):* {% ([first, rest]) => [first, ...rest.map(r => r[1])] %}
-      | null {% () => [] %}
+main -> declaration (_ declaration):*   {% ([first, rest]) => [first, ...rest.map(r => r[1])] %}
+      | null                            {% () => [] %}
 
-declaration -> entity_command {% id %}
-             | rel_command {% id %}
+declaration -> entity_command   {% id %}
+             | rel_command      {% id %}
 
-entity_command -> %ENTITY _ %IDENTIFIER _ optional_attributes_block {% ([_, _1, name, _2, attrs_block, _3, _4]) => ({
+# COMMANDS
+entity_command -> %ENTITY _ %IDENTIFIER _ optional_attributes_block {% ([_, _1, name, _2, attrs_block]) => ({
     type: "entity",
     name: name.value,
-    attributes: attrs_block
-}) %}
+    attributes: attrs_block,
+    loc: { line: name.line, col: name.col, offset: name.offset } }) %}
 
+rel_command -> %REL _ %IDENTIFIER _ ">" _ %IDENTIFIER _ ";"   {% ([_, _1, fromEntity, _2, _3, _4, toEntity, _5, _6]) => ({
+                                                                  type: "rel",
+                                                                  from: fromEntity.value,
+                                                                  to: toEntity.value,
+                                                                  loc: { line: fromEntity.line, col: fromEntity.col, offset: fromEntity.offset } 
+                                                              }) %}
+# SEMI FUNCTIONS
 optional_attributes_block -> "{" _ attributes _ "}" {% ([_, _1, attrs, _2, _3]) => attrs %}
-                           | ";" {% () => [] %}
+                           | ";"                    {% () => [] %}
 
-attributes -> attribute {% ([a]) => [a] %}
-            | attributes _ ";" _ attribute {% ([as, _, _1, _2, a]) => [...as, a] %}
-            | attributes _ ";" _         {% ([as, _, _1, _2]) => as %}
-            | null                       {% () => [] %}
+attributes -> attribute_item                {% ([a]) => [a] %}
+            | attributes _ attribute_item   {% ([as, _, a]) => [...as, a] %}
+            | null                          {% () => [] %}
 
-attribute -> %IDENTIFIER _ ID_designator {% ([name, _, id]) => ({ name: name.value, isID: id }) %}
-           | %IDENTIFIER                {% ([name]) => ({ name: name.value, isID: false }) %}
+attribute_item -> attribute_basic _ ";"   {% ([attr, _]) => attr %}
+                | attribute_composed      {% id %}
+                | attribute_basic         {% id %}
 
-ID_designator -> "[" _ %ID _ "]" {% () => true %}
+attribute_basic -> %IDENTIFIER _ ID_designator  {% ([name, _, _1]) => ({
+                                                    name: name.value,
+                                                    type: "id",
+                                                    loc: { line: name.line, col: name.col, offset: name.offset }
+                                                }) %}
+                 | %IDENTIFIER                  {% ([name]) => ({
+                                                    name: name.value,
+                                                    type: "simple",
+                                                    loc: { line: name.line, col: name.col, offset: name.offset }
+                                                }) %}
 
-rel_command -> %REL _ %IDENTIFIER _ ">" _ %IDENTIFIER _ ";" {% ([_, _1, fromEntity, _2, _3, _4, toEntity, _5, _6]) => ({
-    type: "rel",
-    from: fromEntity.value,
-    to: toEntity.value
-}) %}
+attribute_composed -> %IDENTIFIER _ COMPOSED_designator {% ([name, _, composed_attrs]) => ({
+                                                            name: name.value,
+                                                            type: "composed",
+                                                            attributes: composed_attrs,
+                                                            loc: { line: name.line, col: name.col, offset: name.offset }
+                                                        }) %}
 
+ID_designator -> "[" _ %ID _ "]"  {% () => true %}
 
-_ -> %WHITESPACE:* {% () => null %}
+COMPOSED_designator -> "[" _ %COMPOSED _ "]" _ "{" _ composed_attributes _ "}" {% ([_,_1,_2,_3,_4,_5,_6,_7, attrs, _8,_9]) => attrs %}
+
+composed_attributes -> composed_attribute_item                        {% ([a]) => [a] %}
+                     | composed_attributes _ composed_attribute_item  {% ([as, _, a]) => [...as, a] %}
+                     | null                                           {% () => [] %}
+
+composed_attribute_item -> composed_attribute_basic _ ";"   {% ([attr, _]) => attr %}
+                         | composed_attribute_composed      {% id %}
+                         | composed_attribute_basic         {% id %} 
+
+composed_attribute_basic -> %IDENTIFIER   {% ([name]) => ({
+                                              name: name.value,
+                                              type: "composed_att",
+                                              loc: { line: name.line, col: name.col, offset: name.offset }
+                                          }) %}
+
+composed_attribute_composed -> %IDENTIFIER _ COMPOSED_designator  {% ([name, _, composed_attrs]) => ({
+                                                                      name: name.value,
+                                                                      type: "composed",
+                                                                      attributes: composed_attrs,
+                                                                      loc: { line: name.line, col: name.col, offset: name.offset }
+                                                                  }) %}
+
+optional_semicolon -> ";"   {% () => null %}
+                    | null  {% () => null %}
+
+_ -> %WHITESPACE:*  {% () => null %}
 
 @{%
     const moo = require('moo');
 
     let lexer = moo.compile({
-        BLOCK_COMMENT: { match: /\/\*[^]*?\*\//, lineBreaks: true, value: x => null },
-        COMMENT:    { match: /\/\/[^\n]*\n?/, lineBreaks: true, value: x => null },
-        WHITESPACE: { match: /\s+/, lineBreaks: true },
-        ENTITY:     "entity",
-        REL:        "rel",
-        ID:         "ID",
-        IDENTIFIER: /[a-zA-Z_][a-zA-Z0-9_]*/,
-        "{":        "{",
-        "}":        "}",
-        "[":        "[",
-        "]":        "]",
-        ";":        ";",
-        ">":        ">"
+        BLOCK_COMMENT:  { match: /\/\*[^]*?\*\//, lineBreaks: true, value: x => null },
+        COMMENT:        { match: /\/\/[^\n]*\n?/, lineBreaks: true, value: x => null },
+        WHITESPACE:     { match: /\s+/, lineBreaks: true },
+        ENTITY:         "entity",
+        REL:            "rel",
+        ID:             "ID",
+        COMPOSED:       "COMPOSED",
+        IDENTIFIER:     /[a-zA-Z_][a-zA-Z0-9_]*/,
+        "{":            "{",
+        "}":            "}",
+        "[":            "[",
+        "]":            "]",
+        ";":            ";",
+        ">":            ">"
     });
 
     const originalLexerNext = lexer.next;
