@@ -3,9 +3,10 @@
 main -> declaration (_ declaration):*   {% ([first, rest]) => [first, ...rest.map(r => r[1])] %}
       | null                            {% () => [] %}
 
-declaration -> entity_command   {% id %}
-             | rel_command      {% id %}
-             | note_command      {% id %}
+declaration -> entity_command     {% id %}
+             | rel_command        {% id %}
+             | note_command       {% id %}
+             | specialize_command {% id %}
 # COMMANDS
 entity_command -> %ENTITY _ %IDENTIFIER _ optional_attributes_block {% ([_, _1, name, _2, attrs_block]) => ({
     type: "entity",
@@ -20,12 +21,42 @@ rel_command -> %REL _ %IDENTIFIER _ ">" _ %IDENTIFIER _ ";"   {% ([_, _1, fromEn
                                                                   loc: { line: fromEntity.line, col: fromEntity.col, offset: fromEntity.offset } 
                                                               }) %}
 
-note_command -> %NOTE _ %STRING _ %IDENTIFIER _ ";" {% ([_, _1, string, _2, color, _3, _4]) => ({
-                                        type: "note",
-                                        value: string.value,
-                                        color: color.value,
-                                        loc: { line: string.line, col: string.col, offset: string.offset }
-                                    }) %}
+
+
+
+
+specialize_command -> %SPECIALIZE _ %IDENTIFIER _ specialize_relationship _ ";" {% ([_, _1, string, _2, rel, _3, _4]) => ({
+                                                                          type: "specialization",
+                                                                          relationship: {
+                                                                            type: rel.type,
+                                                                            disjunction: rel.disjunction
+                                                                          },
+                                                                          loc: { line: string.line, col: string.col, offset: string.offset }
+                                                                      }) %}
+
+
+specialize_relationship -> "(" _ specialize_type _  "," _ specialize_disjunction _ ")" {% ([_, _1, type, _2, _3, _4, disjunction, _5, _6]) => ({
+                                                                                  type: type.type,
+                                                                                  disjunction: disjunction.disjunction
+                                                                                }) %}
+                          | null                                              {% ([_]) => ({
+                                                                                    type: "t",
+                                                                                    disjunction: "d"
+                                                                                }) %}
+
+specialize_type -> %IDENTIFIER {% ([typeToken]) => {
+    if (typeToken.value === 't' || typeToken.value === 'p') {
+        return { type: typeToken.value };
+    }
+    throw new Error(`Syntax Error: Expected specialization type 't' or 'p', but got '${typeToken.value}' at line ${typeToken.line} col ${typeToken.col}.`);
+} %}
+
+specialize_disjunction -> _ %IDENTIFIER _ {% ([_, disjunctionToken, _1]) => {
+    if (disjunctionToken.value === 'd' || disjunctionToken.value === 'c') {
+        return { disjunction: disjunctionToken.value };
+    }
+    throw new Error(`Syntax Error: Expected specialization disjunction 'd' or 'c', but got '${disjunctionToken.value}' at line ${disjunctionToken.line} col ${disjunctionToken.col}.`);
+} %}
 
 note_command -> %NOTE _ %STRING _ optional_color {% ([_, _1, string, _2, colorInfo]) => ({
                                         type: "note",
@@ -90,6 +121,8 @@ composed_attribute_composed -> %IDENTIFIER _ COMPOSED_designator  {% ([name, _, 
                                                                   }) %}
 
 # RULES - RELATIONSHIP
+# RULES - SPECIALIZE
+
 
 # RULES - NOTE
 optional_color -> %IDENTIFIER _ ";"   {% ([color, _, _1]) => ({ color: color.value }) %}
@@ -110,7 +143,8 @@ _ -> %WHITESPACE:*  {% () => null %}
         WHITESPACE:     { match: /\s+/, lineBreaks: true },
         ENTITY:         "entity",
         REL:            "rel",
-        NOTE:            "note",
+        SPECIALIZE:     "specialize",
+        NOTE:           "note",
         ID:             "ID",
         COMPOSED:       "COMPOSED",
         IDENTIFIER:     /[a-zA-Z_][a-zA-Z0-9_]*/,
@@ -122,8 +156,11 @@ _ -> %WHITESPACE:*  {% () => null %}
         "}":            "}",
         "[":            "[",
         "]":            "]",
+        "(":            "(",
+        ")":            ")",
         ";":            ";",
-        ">":            ">"
+        ">":            ">",
+        ",":            ","
     });
 
     const originalLexerNext = lexer.next;

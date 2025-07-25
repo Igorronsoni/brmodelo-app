@@ -4,13 +4,15 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "start:dev": "export NODE_ENV=development && nodemon server.js",
-    "start:frontend": "export NODE_ENV=development && webpack-dev-server --hot --progress --color",
-    "build": "export NODE_ENV=production && rimraf ./app/dist && webpack --progress --color",
+    "start:dev": "nodemon server.js",
+    "start:frontend": "npm run build:language-conceptual && webpack-dev-server --hot --progress --color",
+    "build": "rimraf ./app/dist && webpack --progress --color",
     "test": "jest --coverage",
     "test:cy": "yarn cypress run",
     "test:watch": "jest --watch",
-    "cy:open": "yarn cypress open"
+    "cy:open": "yarn cypress open",
+    "build:language-conceptual": "nearleyc app/angular/conceptual/language/grammar.ne -o app/angular/conceptual/language/grammar.cjs",
+    "build:language-conceptual:docs": "nearley-railroad app/angular/conceptual/language/grammar.ne -o app/angular/conceptual/language/grammar.html"
   },
   "engines": {
     "node": "20.x",

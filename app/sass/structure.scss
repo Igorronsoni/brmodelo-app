@@ -90,16 +90,16 @@ a:hover,
 	top: 50px;
 	bottom: 0;
 	left: 0;
-	max-width: 300px;
+	max-width: 350px;
 	height: 100%;
-	min-width: 300px;
+	min-width: 350px;
 	border-right: 1px solid var(--border-default);
 	background-color: var(--gray-95);
 	user-select: none;
 }
 
 .elements-holder .elements-list {
-	width: 300px;
+	width: 350px;
 }
 
 .elements-holder .elements-list .elements {
@@ -186,7 +186,7 @@ a:hover,
 	top: 50px;
 	right: 0;
 	bottom: 0;
-	left: 300px;
+	left: 350px;
 	overflow: hidden;
 	box-sizing: border-box;
 }
@@ -209,7 +209,7 @@ a:hover,
 // .document-info
 ////////////////////////////////////////////////////////////////////////////////
 .document-info {
-	max-width: calc(100% - 300px);
+	max-width: calc(100% - 350px);
 }
 
 .document-info h2 {
