@@ -130,22 +130,15 @@ specialize_disjunction -> _ %IDENTIFIER _ {% ([_, disjunctionToken, _1]) => {
     throw new Error(`Syntax Error: Expected specialization disjunction 'd' or 'c', but got '${disjunctionToken.value}' at line ${disjunctionToken.line} col ${disjunctionToken.col}.`);
 } %}
 
-note_command -> %NOTE _ %STRING _ optional_color {% ([_, _1, string, _2, colorInfo]) => ({
+# COMMANDS - NOTE
+note_command -> %NOTE _ %STRING _ optional_color:? _ %SEMICOLON {% ([_, , string, , color]) => ({
                                         type: "note",
                                         value: string.value,
-                                        color: colorInfo.color,
+                                        color: color ?? null,
                                         loc: { line: string.line, col: string.col, offset: string.offset }
                                     }) %}
 
-
-# RULES - NOTE
-optional_color -> %IDENTIFIER _ ";"   {% ([color, _, _1]) => ({ color: color.value }) %}
-                | ";"                 {% () => ({ color: null }) %}
-
-
-
-optional_semicolon -> ";"   {% () => null %}
-                    | null  {% () => null %}
+optional_color -> %IDENTIFIER {% ([value]) => value.value %}
 
 _ -> %WHITESPACE:*  {% () => null %}
 

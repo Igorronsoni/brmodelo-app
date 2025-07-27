@@ -170,16 +170,15 @@ var grammar = {
             }
             throw new Error(`Syntax Error: Expected specialization disjunction 'd' or 'c', but got '${disjunctionToken.value}' at line ${disjunctionToken.line} col ${disjunctionToken.col}.`);
         } },
-    {"name": "note_command", "symbols": [(lexer.has("NOTE") ? {type: "NOTE"} : NOTE), "_", (lexer.has("STRING") ? {type: "STRING"} : STRING), "_", "optional_color"], "postprocess":  ([_, _1, string, _2, colorInfo]) => ({
+    {"name": "note_command$ebnf$1", "symbols": ["optional_color"], "postprocess": id},
+    {"name": "note_command$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "note_command", "symbols": [(lexer.has("NOTE") ? {type: "NOTE"} : NOTE), "_", (lexer.has("STRING") ? {type: "STRING"} : STRING), "_", "note_command$ebnf$1", "_", (lexer.has("SEMICOLON") ? {type: "SEMICOLON"} : SEMICOLON)], "postprocess":  ([_, , string, , color]) => ({
             type: "note",
             value: string.value,
-            color: colorInfo.color,
+            color: color ?? null,
             loc: { line: string.line, col: string.col, offset: string.offset }
         }) },
-    {"name": "optional_color", "symbols": [(lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", {"literal":";"}], "postprocess": ([color, _, _1]) => ({ color: color.value })},
-    {"name": "optional_color", "symbols": [{"literal":";"}], "postprocess": () => ({ color: null })},
-    {"name": "optional_semicolon", "symbols": [{"literal":";"}], "postprocess": () => null},
-    {"name": "optional_semicolon", "symbols": [], "postprocess": () => null},
+    {"name": "optional_color", "symbols": [(lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER)], "postprocess": ([value]) => value.value},
     {"name": "_$ebnf$1", "symbols": []},
     {"name": "_$ebnf$1", "symbols": ["_$ebnf$1", (lexer.has("WHITESPACE") ? {type: "WHITESPACE"} : WHITESPACE)], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "_", "symbols": ["_$ebnf$1"], "postprocess": () => null}
