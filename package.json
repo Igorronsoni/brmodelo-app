@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node server.js",
     "start:dev": "nodemon server.js",
-    "start:frontend": "npm run build:language-conceptual && webpack-dev-server --hot --progress --color",
+    "start:frontend": "yarn  build:language-conceptual && yarn build:language-conceptual:docs && webpack-dev-server --hot --progress --color",
     "build": "rimraf ./app/dist && webpack --progress --color",
     "test": "jest --coverage",
     "test:cy": "yarn cypress run",

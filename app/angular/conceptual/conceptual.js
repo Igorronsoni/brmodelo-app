@@ -538,17 +538,17 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
 
 		configs.elementSelector = new joint.ui.ElementSelector({ paper: configs.paper, graph: configs.graph, model: new Backbone.Collection });
 
-		const note = new joint.shapes.custom.Note({ position: { x: 100, y: 430 } });
+		const note = new joint.shapes.custom.Note({ position: { x: 125, y: 430 } });
 
 		enditorManager.loadElements([
-			ctrl.shapeFactory.createEntity({ position: { x: 100, y: 10 } }),
-			ctrl.shapeFactory.createIsa({ position: { x: 115, y: 70 } }),
-			ctrl.shapeFactory.createRelationship({ position: { x: 100, y: 130 } }),
-			ctrl.shapeFactory.createAssociative({ position: { x: 90, y: 185 } }),
-			ctrl.shapeFactory.createAttribute({ position: { x: 145, y: 265 } }),
-			ctrl.shapeFactory.createKey({ position: { x: 145, y: 305 } }),
+			ctrl.shapeFactory.createEntity({ position: { x: 125, y: 10 } }),
+			ctrl.shapeFactory.createIsa({ position: { x: 140, y: 70 } }),
+			ctrl.shapeFactory.createRelationship({ position: { x: 125, y: 130 } }),
+			ctrl.shapeFactory.createAssociative({ position: { x: 115, y: 185 } }),
+			ctrl.shapeFactory.createAttribute({ position: { x: 160, y: 265 } }),
+			ctrl.shapeFactory.createKey({ position: { x: 160, y: 305 } }),
 			ctrl.shapeFactory.createComposedAttribute({
-				position: { x: 105, y: 345 },
+				position: { x: 130, y: 345 },
 			}),
 			note
 		]);
