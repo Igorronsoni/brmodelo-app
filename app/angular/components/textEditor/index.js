@@ -9,9 +9,11 @@ const nearley = require("nearley");
 const textEditor = function ($scope, $timeout) {
 	this.text = "";
 	let debounceTimeout = null;
+	let clearErrorTimeout = null;
 
 	this.$onInit = () => {
 		this.modeName = "customMode_" + Math.random().toString(36).substr(2, 5);
+		this.syntaxError = null;
 
 		const tokens = Array.isArray(this.tokens) ? this.tokens : [];
 
@@ -80,12 +82,41 @@ const textEditor = function ($scope, $timeout) {
 					});
 					parser.feed(this.text);
 					result = { data: parser.results[0], error: false };
+					this.syntaxError = null;
 				} catch (e) {
-          result = { data: e.message, error: true };
+					const formatted = this.formatError(e);
+					this.syntaxError = formatted;
+					this.resetError();
+					result = { data: this.formatError(e), error: true };
 				}
-				return this.interpreter(result);
+				if (this.interpreter) {
+					this.interpreter(result);
+				}
+				$scope.$applyAsync();
 			}
 		}, 1000);
+	};
+
+	this.formatError = function (err) {
+		if (err.token && err.token.line && err.token.col) {
+			return `Syntax error at line ${err.token.line} col ${
+				err.token.col
+			}:\nUnexpected ${err.token.type} token: "${
+				err.token.text || err.token.value
+			}"`;
+		}
+
+		return `Syntax error: Unexpected token "${err.token && err.token.value}"`;
+	};
+
+	this.resetError = function () {
+		if (clearErrorTimeout) {
+			$timeout.cancel(clearErrorTimeout);
+		}
+		clearErrorTimeout = $timeout(() => {
+			this.syntaxError = null;
+			$scope.$applyAsync();
+		}, 5000);
 	};
 };
 textEditor.$inject = ["$scope", "$timeout"];
