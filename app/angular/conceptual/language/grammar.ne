@@ -97,23 +97,22 @@ optional_weak -> %WEAK {% () => true %}
 optional_role -> %STRING {% ([value]) => value.value %}
 
 # COMMANDS - SPECIALIZE
-specialize_command -> %SPECIALIZE _ %IDENTIFIER _ specialize_relationship _ ";" {% ([_, _1, string, _2, rel, _3, _4]) => ({
-                                                                          type: "specialization",
-                                                                          relationship: {
-                                                                            type: rel.type,
-                                                                            disjunction: rel.disjunction
-                                                                          },
-                                                                          loc: { line: string.line, col: string.col, offset: string.offset }
-                                                                      }) %}
+specialize_command -> %SPECIALIZE _ specialize_entity_ref _ specialize_notation:? _ %GGT specialize_entity_list _ %SEMICOLON  {% ([command, _1, ref, _2, notation, _3, _4, list]) => ({
+                                                                                                                              type: "specialization",
+                                                                                                                              ref: ref,
+                                                                                                                              notation: notation || { type: "t", disjunction: "d" },
+                                                                                                                              specs: list,
+                                                                                                                              loc: { line: command.line, col: command.col, offset: command.offset }
+                                                                                                                          }) %}
 
+specialize_entity_list -> specialize_entity_ref (_ %COMMA _ specialize_entity_ref):* {% ([first, rest]) => [first, ...rest.map(r => r[3])] %}
 
-specialize_relationship -> "(" _ specialize_type _  "," _ specialize_disjunction _ ")" {% ([_, _1, type, _2, _3, _4, disjunction, _5, _6]) => ({
+specialize_entity_ref ->  %IDENTIFIER         {% ([name]) => ({ type: "ref", name: name.value, loc: { line: name.line, col: name.col, offset: name.offset } }) %}
+                        | entity_command      {% id %}
+
+specialize_notation -> %LPAREN _ specialize_type _  %COMMA _ specialize_disjunction _ %RPAREN {% ([_, _1, type, _2, _3, _4, disjunction, _5, _6]) => ({
                                                                                   type: type.type,
                                                                                   disjunction: disjunction.disjunction
-                                                                                }) %}
-                          | null                                              {% ([_]) => ({
-                                                                                    type: "t",
-                                                                                    disjunction: "d"
                                                                                 }) %}
 
 specialize_type -> %IDENTIFIER {% ([typeToken]) => {

@@ -142,21 +142,24 @@ var grammar = {
         } },
     {"name": "optional_weak", "symbols": [(lexer.has("WEAK") ? {type: "WEAK"} : WEAK)], "postprocess": () => true},
     {"name": "optional_role", "symbols": [(lexer.has("STRING") ? {type: "STRING"} : STRING)], "postprocess": ([value]) => value.value},
-    {"name": "specialize_command", "symbols": [(lexer.has("SPECIALIZE") ? {type: "SPECIALIZE"} : SPECIALIZE), "_", (lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", "specialize_relationship", "_", {"literal":";"}], "postprocess":  ([_, _1, string, _2, rel, _3, _4]) => ({
+    {"name": "specialize_command$ebnf$1", "symbols": ["specialize_notation"], "postprocess": id},
+    {"name": "specialize_command$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "specialize_command", "symbols": [(lexer.has("SPECIALIZE") ? {type: "SPECIALIZE"} : SPECIALIZE), "_", "specialize_entity_ref", "_", "specialize_command$ebnf$1", "_", (lexer.has("GGT") ? {type: "GGT"} : GGT), "specialize_entity_list", "_", (lexer.has("SEMICOLON") ? {type: "SEMICOLON"} : SEMICOLON)], "postprocess":  ([command, _1, ref, _2, notation, _3, _4, list]) => ({
             type: "specialization",
-            relationship: {
-              type: rel.type,
-              disjunction: rel.disjunction
-            },
-            loc: { line: string.line, col: string.col, offset: string.offset }
+            ref: ref,
+            notation: notation || { type: "t", disjunction: "d" },
+            specs: list,
+            loc: { line: command.line, col: command.col, offset: command.offset }
         }) },
-    {"name": "specialize_relationship", "symbols": [{"literal":"("}, "_", "specialize_type", "_", {"literal":","}, "_", "specialize_disjunction", "_", {"literal":")"}], "postprocess":  ([_, _1, type, _2, _3, _4, disjunction, _5, _6]) => ({
+    {"name": "specialize_entity_list$ebnf$1", "symbols": []},
+    {"name": "specialize_entity_list$ebnf$1$subexpression$1", "symbols": ["_", (lexer.has("COMMA") ? {type: "COMMA"} : COMMA), "_", "specialize_entity_ref"]},
+    {"name": "specialize_entity_list$ebnf$1", "symbols": ["specialize_entity_list$ebnf$1", "specialize_entity_list$ebnf$1$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "specialize_entity_list", "symbols": ["specialize_entity_ref", "specialize_entity_list$ebnf$1"], "postprocess": ([first, rest]) => [first, ...rest.map(r => r[3])]},
+    {"name": "specialize_entity_ref", "symbols": [(lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER)], "postprocess": ([name]) => ({ type: "ref", name: name.value, loc: { line: name.line, col: name.col, offset: name.offset } })},
+    {"name": "specialize_entity_ref", "symbols": ["entity_command"], "postprocess": id},
+    {"name": "specialize_notation", "symbols": [(lexer.has("LPAREN") ? {type: "LPAREN"} : LPAREN), "_", "specialize_type", "_", (lexer.has("COMMA") ? {type: "COMMA"} : COMMA), "_", "specialize_disjunction", "_", (lexer.has("RPAREN") ? {type: "RPAREN"} : RPAREN)], "postprocess":  ([_, _1, type, _2, _3, _4, disjunction, _5, _6]) => ({
           type: type.type,
           disjunction: disjunction.disjunction
-        }) },
-    {"name": "specialize_relationship", "symbols": [], "postprocess":  ([_]) => ({
-            type: "t",
-            disjunction: "d"
         }) },
     {"name": "specialize_type", "symbols": [(lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER)], "postprocess":  ([typeToken]) => {
             if (typeToken.value === 't' || typeToken.value === 'p') {
