@@ -6,6 +6,6 @@
 		on-change="$ctrl.onChange()"
 	/>
 </div>
-<div class="editor-error-overlay" ng-if="$ctrl.syntaxError" ng-class="{'show': $ctrl.syntaxError, 'hide': !$ctrl.syntaxError}">
-	{{$ctrl.syntaxError}}
+<div class="editor-error-overlay" ng-if="$ctrl.errors" ng-class="{'show': $ctrl.errors, 'hide': !$ctrl.errors}">
+	{{$ctrl.errors}}
 </div>

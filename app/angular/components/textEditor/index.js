@@ -13,7 +13,7 @@ const textEditor = function ($scope, $timeout) {
 
 	this.$onInit = () => {
 		this.modeName = "customMode_" + Math.random().toString(36).substr(2, 5);
-		this.syntaxError = null;
+		this.errors = null;
 
 		const tokens = Array.isArray(this.tokens) ? this.tokens : [];
 
@@ -75,29 +75,33 @@ const textEditor = function ($scope, $timeout) {
 
 		debounceTimeout = $timeout(() => {
 			if (this.interpreter && this.grammar) {
-				let result = null;
 				try {
 					const parser = new nearley.Parser(this.myGrammar, {
 						lexer: this.lexer,
 					});
 					parser.feed(this.text);
-					result = { data: parser.results[0], error: false };
-					this.syntaxError = null;
+					this.errors = null;
+
+					const result = this.interpreter(parser.results[0]);
+					if (!result.success) {
+						this.errors = this.formatSemanticErrors(result.errors.join("\n"));
+						this.resetError();
+					}
 				} catch (e) {
-					const formatted = this.formatError(e);
-					this.syntaxError = formatted;
+					const formatted = this.formatSyntaxErrors(e);
+					this.errors = formatted;
 					this.resetError();
-					result = { data: this.formatError(e), error: true };
-				}
-				if (this.interpreter) {
-					this.interpreter(result);
 				}
 				$scope.$applyAsync();
 			}
 		}, 1000);
 	};
 
-	this.formatError = function (err) {
+	this.formatSemanticErrors = function (err) {
+		return err || "Semantic error occurred";
+	};
+
+	this.formatSyntaxErrors = function (err) {
 		if (err.token && err.token.line && err.token.col) {
 			return `Syntax error at line ${err.token.line} col ${
 				err.token.col
@@ -114,7 +118,7 @@ const textEditor = function ($scope, $timeout) {
 			$timeout.cancel(clearErrorTimeout);
 		}
 		clearErrorTimeout = $timeout(() => {
-			this.syntaxError = null;
+			this.errors = null;
 			$scope.$applyAsync();
 		}, 5000);
 	};

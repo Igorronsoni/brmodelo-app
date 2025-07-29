@@ -34,11 +34,10 @@ import supportBannersList from "../components/supportBannersList";
 import textEditor from "../components/textEditor";
 import tokens from './language/tokens';
 import grammar from "./language/grammar.cjs";
+import SemanticInterpreter from "./language/interpreter";
 
 const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibModal, $state, $transitions, preventExitService, $filter) {
 	const ctrl = this;
-  ctrl.languageTokens = tokens;
-  ctrl.grammar = grammar;
 	ctrl.modelState = {
 		isDirty: false,
 		updatedAt: new Date(),
@@ -568,6 +567,9 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
 		ctrl.toolsViewService = new ToolsViewService();
 		ctrl.setLoading(true);
     ctrl.activeTab = "textEditor";
+    ctrl.languageTokens = tokens;
+    ctrl.grammar = grammar;
+    ctrl.semanticInterpreter = new SemanticInterpreter();
 		ModelAPI.getModel($stateParams.modelid, $rootScope.loggeduser).then((resp) => {
 			const jsonModel = (typeof resp.data.model == "string") ? JSON.parse(resp.data.model) : resp.data.model;
 			ctrl.model = resp.data;
@@ -593,6 +595,9 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
 		ctrl.shapeValidator = null;
 		ctrl.shapeLinker = null;
 		ctrl.entityExtensor = null;
+    ctrl.languageTokens = null;
+    ctrl.grammar = null;
+    ctrl.semanticInterpreter = null;
 		configs.graph = null;
 		configs.paper = null;
 		configs.keyboardController.unbindAll();
@@ -603,8 +608,7 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
 	}
 
   this.interpreter = function (result) {
-    console.log(result)
-    return { success: true };
+    return ctrl.semanticInterpreter.execute(result);
   };
 
 };
