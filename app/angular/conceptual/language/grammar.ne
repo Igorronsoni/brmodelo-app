@@ -19,22 +19,29 @@ entity_command -> %ENTITY _ %IDENTIFIER _ %LBRACE _ attributes _ %RBRACE {% ([,,
 
 attributes -> attribute:*  {% (attrs) => attrs.flat() %}
 
-attribute ->  %IDENTIFIER _ %SEMICOLON                                                                {% ([name]) => ({ 
+attribute ->  cardinality:? _ %IDENTIFIER  _ %SEMICOLON                                               {% ([card, , name]) => ({ 
                                                                                                         name: name.value, 
                                                                                                         type: "simple",
+                                                                                                        cardinality: card ?? { min: "1", max: "1" },
                                                                                                         loc: { line: name.line, col: name.col, offset: name.offset } 
                                                                                                       }) %}
-            | %IDENTIFIER _ %LBRACK _ %ID _ %RBRACK _ %SEMICOLON                                      {% ([name]) => ({ 
+            | %IDENTIFIER _ %ID _ %SEMICOLON                                                          {% ([name]) => ({ 
                                                                                                         name: name.value, 
                                                                                                         type: "id",
                                                                                                         loc: { line: name.line, col: name.col, offset: name.offset } 
                                                                                                       }) %}
-            | %IDENTIFIER _ %LBRACK _ %COMPOSED _ %RBRACK _ %LBRACE _ attributes_composed _ %RBRACE   {% ([name, _, _1, _2, _3, _4, _5, _6, _7, _8, attrs]) => ({
+            | %IDENTIFIER _ %COMPOSED  _ %LBRACE _ attributes_composed _ %RBRACE                      {% ([name, _, _1, _2, _3, _4, attrs]) => ({
                                                                                                         name: name.value, 
                                                                                                         type: "composed",
                                                                                                         attributes: attrs ?? [],
                                                                                                         loc: { line: name.line, col: name.col, offset: name.offset } 
                                                                                                       }) %}
+
+cardinality -> %LPAREN _ zero_or_one _ %COMMA _ one_or_n _ %RPAREN    {% ([, , min, , , , max]) => ({
+                                                                          min: min.value,
+                                                                          max: max.value
+                                                                      }) %} 
+
 
 attributes_composed -> attribute_composed:*  {% (attrs) => attrs.flat() %}
 
@@ -45,42 +52,32 @@ attribute_composed -> %IDENTIFIER _ %SEMICOLON  {% ([name]) => ({
                                                 }) %}
 
 # COMMANDS - ASSENTITY
-assentity_command -> %ASSENTITY _ %IDENTIFIER _ %LBRACE _ attributes _ %RBRACE {% ([,, name,,,, attrs,,]) => ({
-                                                                                  type: "assentity",
-                                                                                  name: name.value,
-                                                                                  attributes: attrs,
-                                                                                  loc: { line: name.line, col: name.col, offset: name.offset 
-                                                                                } }) %}
+assentity_command -> %ASSENTITY _ %IDENTIFIER _ %SEMICOLON    {% ([,, name]) => ({
+                                                                type: "assentity",
+                                                                relationship: name.value,
+                                                                loc: { line: name.line, col: name.col, offset: name.offset } 
+                                                              }) %}
 
 # COMMANDS - RELATIONSHIP
-rel_command -> %REL _ %IDENTIFIER _ %GGT _ rel_entity _ %GT _ rel_entity _ %SEMICOLON   {% ([_, _1, name, _2, _3, _4, fromEntity, _5, _6, _7, toEntity]) => ({
-                                                                                            type: "relationship",
-                                                                                            name: name.value,
-                                                                                            from: fromEntity,
-                                                                                            to: toEntity,
-                                                                                            loc: { line: name.line, col: name.col, offset: name.offset } 
-                                                                                        }) %}
+rel_command -> %REL _ %IDENTIFIER _ rel_attributes:? _ %GGT _ rel_entities _ %SEMICOLON   {% ([,, name,, attrs,,,, refs]) => ({
+                                                                                                            type: "relationship",
+                                                                                                            name: name.value,
+                                                                                                            attributes: attrs,
+                                                                                                            refs: refs,
+                                                                                                            loc: { line: name.line, col: name.col, offset: name.offset } 
+                                                                                                        }) %}
+rel_attributes -> %LBRACE _ attributes _ %RBRACE  {% ([,, attrs]) => attrs %}
 
-rel_entity -> %IDENTIFIER _ rel_cardinality _ optional_weak:? _ optional_role:?     {% ([name, , card, , weak, , role]) => ({
+rel_entities -> rel_entity_ref (_ %COMMA _ rel_entity_ref):* {% ([first, rest]) => [first, ...rest.map(r => r[3])] %}
+
+rel_entity_ref -> cardinality:? _ %IDENTIFIER _ optional_weak:? _ optional_role:?   {% ([card, , name, ,weak, ,role]) => ({
+                                                                                        type: "entity_ref",
                                                                                         name: name.value,
-                                                                                        type: "identifier",
-                                                                                        cardinality: card.value,
+                                                                                        cardinality: card ?? { min: "0", max: "n" },
                                                                                         weak: weak ?? false,
-                                                                                        role: role ?? "",
-                                                                                        loc: { line: name.line, col: name.col, offset: name.offset }
+                                                                                        role: role ?? null,
+                                                                                        loc: { line: name.line, col: name.col, offset: name.offset }  
                                                                                     }) %}
-            | entity_command _ rel_cardinality _ optional_weak:? _ optional_role:?  {% ([entity, , card, , weak, , role]) => ({
-                                                                                        entity: entity,
-                                                                                        type: "entity",
-                                                                                        cardinality: card.value,
-                                                                                        weak: weak ?? false,
-                                                                                        role: role ?? "",
-                                                                                        loc: { line: name.line, col: name.col, offset: name.offset }
-                                                                                    }) %}
-
-rel_cardinality -> %LPAREN _ rel_cardinal_pair _ %RPAREN  {% ([, , pair]) => ({ value: pair }) %}
-
-rel_cardinal_pair -> zero_or_one _ %COMMA _ one_or_n {% ([left, , , , right]) => `${left.value},${right.value}` %}
 
 zero_or_one ->  %ZERO {% ([token]) => ({ value: token.value }) %}
               | %ONE  {% ([token]) => ({ value: token.value }) %}
@@ -97,37 +94,38 @@ optional_weak -> %WEAK {% () => true %}
 optional_role -> %STRING {% ([value]) => value.value %}
 
 # COMMANDS - SPECIALIZE
-specialize_command -> %SPECIALIZE _ specialize_entity_ref _ specialize_notation:? _ %GGT specialize_entity_list _ %SEMICOLON  {% ([command, _1, ref, _2, notation, _3, _4, list]) => ({
-                                                                                                                              type: "specialization",
-                                                                                                                              ref: ref,
-                                                                                                                              notation: notation || { type: "t", disjunction: "d" },
-                                                                                                                              specs: list,
-                                                                                                                              loc: { line: command.line, col: command.col, offset: command.offset }
-                                                                                                                          }) %}
+specialize_command -> %SPECIALIZE _ specialize_types:? _ specialize_entity_ref _ %GGT _ specialize_entity_list _ %SEMICOLON  {% ([,, notation,, ref,,,, list]) => ({
+                                                                                                                                type: "specialize",
+                                                                                                                                ref: ref,
+                                                                                                                                notation: notation || { type: "t", disjunction: "d" },
+                                                                                                                                specs: list,
+                                                                                                                                loc: { line: command.line, col: command.col, offset: command.offset }
+                                                                                                                              }) %}
+                                                                                                                              
+specialize_types -> %LPAREN _ t_or_p _ %COMMA _ d_or_c _ %RPAREN    {% ([,, type,,,, disjunction]) => ({
+                                                                        type: type.value,
+                                                                        disjunction: disjunction.value
+                                                                    }) %}
+
+t_or_p ->  %IDENTIFIER  {% ([token]) => {
+                            if (token.value === 't' || token.value === 'p') {
+                                return { type: token.value };
+                            }
+                            throw new Error(`Syntax Error: Expected specialization type 't' or 'p', but got '${token.value}' at line ${token.line} col ${token.col}.`);
+                        } %}
+
+d_or_c ->  %IDENTIFIER {% ([token]) => {
+                            if (token.value === 'd' || token.value === 'c') {
+                                return { type: token.value };
+                            }
+                            throw new Error(`Syntax Error: Expected specialization type 'd' or 'c', but got '${token.value}' at line ${token.line} col ${token.col}.`);
+                        } %}
 
 specialize_entity_list -> specialize_entity_ref (_ %COMMA _ specialize_entity_ref):* {% ([first, rest]) => [first, ...rest.map(r => r[3])] %}
 
 specialize_entity_ref ->  %IDENTIFIER         {% ([name]) => ({ type: "ref", name: name.value, loc: { line: name.line, col: name.col, offset: name.offset } }) %}
                         | entity_command      {% id %}
 
-specialize_notation -> %LPAREN _ specialize_type _  %COMMA _ specialize_disjunction _ %RPAREN {% ([_, _1, type, _2, _3, _4, disjunction, _5, _6]) => ({
-                                                                                  type: type.type,
-                                                                                  disjunction: disjunction.disjunction
-                                                                                }) %}
-
-specialize_type -> %IDENTIFIER {% ([typeToken]) => {
-    if (typeToken.value === 't' || typeToken.value === 'p') {
-        return { type: typeToken.value };
-    }
-    throw new Error(`Syntax Error: Expected specialization type 't' or 'p', but got '${typeToken.value}' at line ${typeToken.line} col ${typeToken.col}.`);
-} %}
-
-specialize_disjunction -> _ %IDENTIFIER _ {% ([_, disjunctionToken, _1]) => {
-    if (disjunctionToken.value === 'd' || disjunctionToken.value === 'c') {
-        return { disjunction: disjunctionToken.value };
-    }
-    throw new Error(`Syntax Error: Expected specialization disjunction 'd' or 'c', but got '${disjunctionToken.value}' at line ${disjunctionToken.line} col ${disjunctionToken.col}.`);
-} %}
 
 # COMMANDS - NOTE
 note_command -> %NOTE _ %STRING _ optional_color:? _ %SEMICOLON {% ([_, , string, , color]) => ({
@@ -157,8 +155,8 @@ _ -> %WHITESPACE:*  {% () => null %}
         COMPOSED:       "COMPOSED",
         ZERO:           "0",
         ONE:            "1",
-        WEAK:           "weak",
-        IDENTIFIER:     /[a-zA-Z_][a-zA-Z0-9_]*/,
+        WEAK:           "WEAK",
+        IDENTIFIER:     /[a-zA-Z_]\w*/,
         STRING:         {
                           match: /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/,
                           value: x => x.substring(1, x.length - 1)
@@ -171,7 +169,6 @@ _ -> %WHITESPACE:*  {% () => null %}
         LPAREN:         "(",
         RPAREN:         ")",
         GGT:            ">>",
-        GT:             ">",
         COMMA:          ",",
     });
 

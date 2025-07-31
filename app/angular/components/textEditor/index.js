@@ -84,7 +84,8 @@ const textEditor = function ($scope, $timeout) {
 
 					const result = this.interpreter(parser.results[0]);
 					if (!result.success) {
-						this.errors = this.formatSemanticErrors(result.errors.join("\n"));
+            const [error] = result.errors;
+						this.errors = this.formatSemanticErrors(error.message);
 						this.resetError();
 					}
 				} catch (e) {
