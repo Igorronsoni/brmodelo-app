@@ -94,14 +94,14 @@ optional_weak -> %WEAK {% () => true %}
 optional_role -> %STRING {% ([value]) => value.value %}
 
 # COMMANDS - SPECIALIZE
-specialize_command -> %SPECIALIZE _ specialize_types:? _ specialize_entity_ref _ %GGT _ specialize_entity_list _ %SEMICOLON  {% ([,, notation,, ref,,,, list]) => ({
+specialize_command -> %SPECIALIZE _ specialize_types:? _ specialize_entity_ref _ %GGT _ specialize_entity_list _ %SEMICOLON  {% ([command,, notation,, ref,,,, list]) => ({
                                                                                                                                 type: "specialize",
                                                                                                                                 ref: ref,
                                                                                                                                 notation: notation || { type: "t", disjunction: "d" },
                                                                                                                                 specs: list,
                                                                                                                                 loc: { line: command.line, col: command.col, offset: command.offset }
                                                                                                                               }) %}
-                                                                                                                              
+
 specialize_types -> %LPAREN _ t_or_p _ %COMMA _ d_or_c _ %RPAREN    {% ([,, type,,,, disjunction]) => ({
                                                                         type: type.value,
                                                                         disjunction: disjunction.value
@@ -109,14 +109,14 @@ specialize_types -> %LPAREN _ t_or_p _ %COMMA _ d_or_c _ %RPAREN    {% ([,, type
 
 t_or_p ->  %IDENTIFIER  {% ([token]) => {
                             if (token.value === 't' || token.value === 'p') {
-                                return { type: token.value };
+                                return { value: token.value };
                             }
                             throw new Error(`Syntax Error: Expected specialization type 't' or 'p', but got '${token.value}' at line ${token.line} col ${token.col}.`);
                         } %}
 
-d_or_c ->  %IDENTIFIER {% ([token]) => {
+d_or_c ->  %IDENTIFIER  {% ([token]) => {
                             if (token.value === 'd' || token.value === 'c') {
-                                return { type: token.value };
+                                return { value: token.value };
                             }
                             throw new Error(`Syntax Error: Expected specialization type 'd' or 'c', but got '${token.value}' at line ${token.line} col ${token.col}.`);
                         } %}

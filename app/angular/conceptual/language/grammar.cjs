@@ -144,7 +144,7 @@ var grammar = {
     {"name": "optional_role", "symbols": [(lexer.has("STRING") ? {type: "STRING"} : STRING)], "postprocess": ([value]) => value.value},
     {"name": "specialize_command$ebnf$1", "symbols": ["specialize_types"], "postprocess": id},
     {"name": "specialize_command$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "specialize_command", "symbols": [(lexer.has("SPECIALIZE") ? {type: "SPECIALIZE"} : SPECIALIZE), "_", "specialize_command$ebnf$1", "_", "specialize_entity_ref", "_", (lexer.has("GGT") ? {type: "GGT"} : GGT), "_", "specialize_entity_list", "_", (lexer.has("SEMICOLON") ? {type: "SEMICOLON"} : SEMICOLON)], "postprocess":  ([,, notation,, ref,,,, list]) => ({
+    {"name": "specialize_command", "symbols": [(lexer.has("SPECIALIZE") ? {type: "SPECIALIZE"} : SPECIALIZE), "_", "specialize_command$ebnf$1", "_", "specialize_entity_ref", "_", (lexer.has("GGT") ? {type: "GGT"} : GGT), "_", "specialize_entity_list", "_", (lexer.has("SEMICOLON") ? {type: "SEMICOLON"} : SEMICOLON)], "postprocess":  ([command,, notation,, ref,,,, list]) => ({
           type: "specialize",
           ref: ref,
           notation: notation || { type: "t", disjunction: "d" },
@@ -157,13 +157,13 @@ var grammar = {
         }) },
     {"name": "t_or_p", "symbols": [(lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER)], "postprocess":  ([token]) => {
             if (token.value === 't' || token.value === 'p') {
-                return { type: token.value };
+                return { value: token.value };
             }
             throw new Error(`Syntax Error: Expected specialization type 't' or 'p', but got '${token.value}' at line ${token.line} col ${token.col}.`);
         } },
     {"name": "d_or_c", "symbols": [(lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER)], "postprocess":  ([token]) => {
             if (token.value === 'd' || token.value === 'c') {
-                return { type: token.value };
+                return { value: token.value };
             }
             throw new Error(`Syntax Error: Expected specialization type 'd' or 'c', but got '${token.value}' at line ${token.line} col ${token.col}.`);
         } },
