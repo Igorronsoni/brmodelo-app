@@ -62,7 +62,7 @@ assentity_command -> %ASSENTITY _ %IDENTIFIER _ %SEMICOLON    {% ([,, name]) => 
 rel_command -> %REL _ %IDENTIFIER _ rel_attributes:? _ %GGT _ rel_entities _ %SEMICOLON   {% ([,, name,, attrs,,,, refs]) => ({
                                                                                                             type: "relationship",
                                                                                                             name: name.value,
-                                                                                                            attributes: attrs,
+                                                                                                            attributes: attrs ?? [],
                                                                                                             refs: refs,
                                                                                                             loc: { line: name.line, col: name.col, offset: name.offset } 
                                                                                                         }) %}

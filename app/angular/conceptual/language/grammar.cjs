@@ -108,7 +108,7 @@ var grammar = {
     {"name": "rel_command", "symbols": [(lexer.has("REL") ? {type: "REL"} : REL), "_", (lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", "rel_command$ebnf$1", "_", (lexer.has("GGT") ? {type: "GGT"} : GGT), "_", "rel_entities", "_", (lexer.has("SEMICOLON") ? {type: "SEMICOLON"} : SEMICOLON)], "postprocess":  ([,, name,, attrs,,,, refs]) => ({
             type: "relationship",
             name: name.value,
-            attributes: attrs,
+            attributes: attrs ?? [],
             refs: refs,
             loc: { line: name.line, col: name.col, offset: name.offset } 
         }) },
