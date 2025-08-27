@@ -82,12 +82,7 @@ const textEditor = function ($scope, $timeout) {
 					parser.feed(this.text);
 					this.errors = null;
 
-					const result = this.interpreter(parser.results[0]);
-					if (!result.success) {
-            const [error] = result.errors;
-						this.errors = this.formatSemanticErrors(error.message);
-						this.resetError();
-					}
+					this.interpreter(parser.results[0]);
 				} catch (e) {
 					const formatted = this.formatSyntaxErrors(e);
 					this.errors = formatted;
@@ -98,10 +93,6 @@ const textEditor = function ($scope, $timeout) {
 		}, 1000);
 	};
 
-	this.formatSemanticErrors = function (err) {
-		return err || "Semantic error occurred";
-	};
-
 	this.formatSyntaxErrors = function (err) {
 		if (err.token && err.token.line && err.token.col) {
 			return `Syntax error at line ${err.token.line} col ${
@@ -110,7 +101,9 @@ const textEditor = function ($scope, $timeout) {
 				err.token.text || err.token.value
 			}"`;
 		}
-
+    if (err.message) {
+      return err.message
+    }
 		return `Syntax error: Unexpected token "${err.token && err.token.value}"`;
 	};
 

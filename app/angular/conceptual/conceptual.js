@@ -35,6 +35,7 @@ import textEditor from "../components/textEditor";
 import tokens from './language/tokens';
 import grammar from "./language/grammar.cjs";
 import SemanticInterpreter from "./language/interpreter";
+import DiagramGenerator from "./language/diagramGenerator"
 
 const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibModal, $state, $transitions, preventExitService, $filter) {
 	const ctrl = this;
@@ -557,6 +558,7 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
 
 	ctrl.$postLink = () => {
 		buildWorkspace();
+    ctrl.generator = new DiagramGenerator(configs.graph, ctrl.shapeFactory, configs.paper);
 	};
 
 	ctrl.$onInit = () => {
@@ -565,11 +567,14 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
 		ctrl.shapeLinker = new Linker(ctrl.shapeFactory, ctrl.shapeValidator);
 		ctrl.entityExtensor = new EntityExtensor(ctrl.shapeFactory, ctrl.shapeValidator, ctrl.shapeLinker);
 		ctrl.toolsViewService = new ToolsViewService();
-		ctrl.setLoading(true);
+
     ctrl.activeTab = "textEditor";
     ctrl.languageTokens = tokens;
     ctrl.grammar = grammar;
     ctrl.semanticInterpreter = new SemanticInterpreter();
+    ctrl.generator = null;
+
+		ctrl.setLoading(true);
 		ModelAPI.getModel($stateParams.modelid, $rootScope.loggeduser).then((resp) => {
 			const jsonModel = (typeof resp.data.model == "string") ? JSON.parse(resp.data.model) : resp.data.model;
 			ctrl.model = resp.data;
@@ -598,6 +603,7 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
     ctrl.languageTokens = null;
     ctrl.grammar = null;
     ctrl.semanticInterpreter = null;
+    ctrl.generator = null;
 		configs.graph = null;
 		configs.paper = null;
 		configs.keyboardController.unbindAll();
@@ -608,9 +614,9 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
 	}
 
   this.interpreter = function (result) {
-    return ctrl.semanticInterpreter.execute(result);
+    ctrl.semanticInterpreter.execute(result);
+    ctrl.generator.generate(result);
   };
-
 };
 
 export default angular
