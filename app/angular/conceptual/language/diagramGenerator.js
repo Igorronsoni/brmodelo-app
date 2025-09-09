@@ -75,7 +75,7 @@ class DiagramGenerator {
 			let attribute = null;
 
 			switch (attr.type) {
-				case "id":
+				case "identifier":
 					attribute = this.shapeFactory.createKey({});
 					break;
 				case "simple":

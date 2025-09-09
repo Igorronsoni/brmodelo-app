@@ -4,7 +4,7 @@ const tokens = [
 	{ regex: /\brel\b/, token: "keyword" },
   { regex: /\bassentity\b/, token: "keyword" },
   { regex: /\bnote\b/, token: "keyword" },
-	{ regex: /\bID\b/, token: "keyword" },
+	{ regex: /\bKEY\b/, token: "keyword" },
 	{ regex: /\bCOMPOSED\b/, token: "keyword" },
   { regex: /\bWEAK\b/, token: "keyword" },
 	{ regex: />>/, token: "keyword" },

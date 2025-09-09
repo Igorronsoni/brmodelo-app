@@ -25,9 +25,9 @@ attribute ->  cardinality:? _ %IDENTIFIER  _ %SEMICOLON                         
                                                                                                         cardinality: card ?? { min: "1", max: "1" },
                                                                                                         loc: { line: name.line, col: name.col, offset: name.offset } 
                                                                                                       }) %}
-            | %IDENTIFIER _ %ID _ %SEMICOLON                                                          {% ([name]) => ({ 
+            | %IDENTIFIER _ %KEY _ %SEMICOLON                                                          {% ([name]) => ({ 
                                                                                                         name: name.value, 
-                                                                                                        type: "id",
+                                                                                                        type: "identifier",
                                                                                                         loc: { line: name.line, col: name.col, offset: name.offset } 
                                                                                                       }) %}
             | %IDENTIFIER _ %COMPOSED  _ %LBRACE _ attributes_composed _ %RBRACE                      {% ([name, _, _1, _2, _3, _4, attrs]) => ({
@@ -45,9 +45,10 @@ cardinality -> %LPAREN _ zero_or_one _ %COMMA _ one_or_n _ %RPAREN    {% ([, , m
 
 attributes_composed -> attribute_composed:*  {% (attrs) => attrs.flat() %}
 
-attribute_composed -> %IDENTIFIER _ %SEMICOLON  {% ([name]) => ({
+attribute_composed -> cardinality:? _ %IDENTIFIER _ %SEMICOLON  {% ([card, , name]) => ({
                                                     name: name.value,
                                                     type: "composed_att",
+                                                    cardinality: card ?? { min: "1", max: "1" },
                                                     loc: { line: name.line, col: name.col, offset: name.offset }
                                                 }) %}
 
@@ -151,7 +152,7 @@ _ -> %WHITESPACE:*  {% () => null %}
         REL:            "rel",
         SPECIALIZE:     "specialize",
         NOTE:           "note",
-        ID:             "ID",
+        KEY:             "KEY",
         COMPOSED:       "COMPOSED",
         ZERO:           "0",
         ONE:            "1",

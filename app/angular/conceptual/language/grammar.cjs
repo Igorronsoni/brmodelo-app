@@ -14,7 +14,7 @@ function id(x) { return x[0]; }
         REL:            "rel",
         SPECIALIZE:     "specialize",
         NOTE:           "note",
-        ID:             "ID",
+        KEY:             "KEY",
         COMPOSED:       "COMPOSED",
         ZERO:           "0",
         ONE:            "1",
@@ -75,9 +75,9 @@ var grammar = {
           cardinality: card ?? { min: "1", max: "1" },
           loc: { line: name.line, col: name.col, offset: name.offset } 
         }) },
-    {"name": "attribute", "symbols": [(lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", (lexer.has("ID") ? {type: "ID"} : ID), "_", (lexer.has("SEMICOLON") ? {type: "SEMICOLON"} : SEMICOLON)], "postprocess":  ([name]) => ({ 
+    {"name": "attribute", "symbols": [(lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", (lexer.has("KEY") ? {type: "KEY"} : KEY), "_", (lexer.has("SEMICOLON") ? {type: "SEMICOLON"} : SEMICOLON)], "postprocess":  ([name]) => ({ 
           name: name.value, 
-          type: "id",
+          type: "identifier",
           loc: { line: name.line, col: name.col, offset: name.offset } 
         }) },
     {"name": "attribute", "symbols": [(lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", (lexer.has("COMPOSED") ? {type: "COMPOSED"} : COMPOSED), "_", (lexer.has("LBRACE") ? {type: "LBRACE"} : LBRACE), "_", "attributes_composed", "_", (lexer.has("RBRACE") ? {type: "RBRACE"} : RBRACE)], "postprocess":  ([name, _, _1, _2, _3, _4, attrs]) => ({
@@ -93,9 +93,12 @@ var grammar = {
     {"name": "attributes_composed$ebnf$1", "symbols": []},
     {"name": "attributes_composed$ebnf$1", "symbols": ["attributes_composed$ebnf$1", "attribute_composed"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "attributes_composed", "symbols": ["attributes_composed$ebnf$1"], "postprocess": (attrs) => attrs.flat()},
-    {"name": "attribute_composed", "symbols": [(lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", (lexer.has("SEMICOLON") ? {type: "SEMICOLON"} : SEMICOLON)], "postprocess":  ([name]) => ({
+    {"name": "attribute_composed$ebnf$1", "symbols": ["cardinality"], "postprocess": id},
+    {"name": "attribute_composed$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "attribute_composed", "symbols": ["attribute_composed$ebnf$1", "_", (lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", (lexer.has("SEMICOLON") ? {type: "SEMICOLON"} : SEMICOLON)], "postprocess":  ([card, , name]) => ({
             name: name.value,
             type: "composed_att",
+            cardinality: card ?? { min: "1", max: "1" },
             loc: { line: name.line, col: name.col, offset: name.offset }
         }) },
     {"name": "assentity_command", "symbols": [(lexer.has("ASSENTITY") ? {type: "ASSENTITY"} : ASSENTITY), "_", (lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", (lexer.has("SEMICOLON") ? {type: "SEMICOLON"} : SEMICOLON)], "postprocess":  ([,, name]) => ({

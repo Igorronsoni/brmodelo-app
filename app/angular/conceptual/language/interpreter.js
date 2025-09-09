@@ -8,7 +8,7 @@ export default class SemanticInterpreter {
 		this.entities = [];
 		this.relationships = [];
 
-		for (const node of ast) {
+    for (const node of ast) {
 			switch (node.type) {
 				case "entity":
 					this._checkEntity(node);
@@ -33,6 +33,7 @@ export default class SemanticInterpreter {
 
 		let attributes = [];
 		for (const attr of node.attributes) {
+      
 			if (attributes.find((att) => att.name === attr.name)) {
 				throw Error(`Attribute '${attr.name}' is already defined in entity ${node.name}`);
 			}
@@ -40,9 +41,9 @@ export default class SemanticInterpreter {
 			attributes.push(attr);
 			this._checkAttribute(attr);
 		}
-
-		if (!node.attributes.find((attr) => attr.type === "id")) {
-      throw Error(`The entity '${node.name}' must have at least one 'id' attribute`);
+    
+		if (!node.attributes.find((attr) => attr.type === "identifier")) {
+      throw Error(`The entity '${node.name}' must have at least one identifier attribute`);
 		}
 
 		this.entities.push(node);
@@ -50,15 +51,15 @@ export default class SemanticInterpreter {
 
 	_checkAttribute(node) {
 		if (node) {
-			if (!["simple", "id", "composed"].includes(node.type)) {
-        throw Error(`Attribute '${node.name}' must be of type simple, id or composed`);
+			if (!["simple", "identifier", "composed"].includes(node.type)) {
+        throw Error(`Attribute '${node.name}' must be of type simple, identifier or composed`);
 			}
-      console.log(node)
+      
 			let rep = []
       switch (node.type) {
 				case "simple":
 					break;
-				case "id":
+				case "identifier":
 					break;
 				case "composed":
           for (const attr of node.attributes) {
