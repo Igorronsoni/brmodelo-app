@@ -1,15 +1,23 @@
-import * as joint from "jointjs/dist/joint";
 import dagre from "dagre";
+import Factory from "../factory";
+import * as joint from "jointjs/dist/joint";
+import Linker from "../linker";
 
 class DiagramGenerator {
-	constructor(graph, shapeFactory, paper) {
+	constructor(graph, factory, linker) {
+		/** @type {joint.dia.Graph} */
 		this.graph = graph;
-		this.shapeFactory = shapeFactory;
-		this.paper = paper;
+		/** @type {Factory} */
+		this.factory = factory;
+		/** @type {Linker} */
+		this.linker = linker;
+
+		this.entities = new Map();
 	}
 
 	generate(ast) {
 		this.graph.clear();
+
 		ast.forEach((node) => {
 			switch (node.type) {
 				case "entity":
@@ -24,91 +32,93 @@ class DiagramGenerator {
 	}
 
 	createOrUpdateEntity(node) {
-		let entity = this.graph
-			.getCells()
-			.find(
-				(c) =>
-					c.get("type") === "erd.Entity" && c.attr("text/text") === node.name,
-			);
-
-		if (!entity) {
-			entity = this.shapeFactory.createEntity({});
-			this.graph.addCell(entity);
-			entity.attr("text/text", node.name);
-		}
+		const entity = this.factory.createEntity({ position: { x: 125, y: 10 } });
+		this.graph.addCell(entity);
+		entity.attr("text/text", node.name);
 
 		if (node.attributes && node.attributes.length > 0) {
 			this.createOrUpdateAttributes(node, entity);
 		}
+
+		this.entities.set(node.name, entity);
 	}
 
 	createOrUpdateRelationship(node) {
-		let rel = this.graph
-			.getCells()
-			.find(
-				(c) =>
-					c.get("type") === "erd.Relationship" &&
-					c.attr("text/text") === node.name,
-			);
+		let rel;
+		if (node.refs.length == 1) {
+			const ent = this.entities.get(node.refs[0].name);
+			const card = this.util_create_cardinality(node.refs[0].cardinality);
 
-		if (!rel) {
-			rel = this.shapeFactory.createRelationship({});
+			rel = this.linker.addAutoRelationship({
+				element: { model: ent },
+			});
+			rel.attr("text/text", node.name);
+			const connectedLinks = this.graph.getConnectedLinks(rel);
+
+			connectedLinks.forEach((link) => {
+				link.label(0, { attrs: { text: { text: card } } });
+			});
+		} else {
+			rel = this.factory.createRelationship({
+				attrs: { text: { text: node.name } },
+			});
 			this.graph.addCell(rel);
+			node.refs.forEach((entity) => {
+				const ent = this.entities.get(entity.name);
+				const card = this.util_create_cardinality(entity.cardinality);
+
+				if (ent) {
+					const link = this.linker.createLink(ent, rel, this.graph);
+					link.label(0, { attrs: { text: { text: card } } });
+				}
+			});
 		}
 
-		rel.attr("text/text", node.name);
-
-		node.entities.forEach((entName) => {
-			const ent = this.existing[entName];
-			if (ent) {
-				const link = new joint.dia.Link({
-					source: { id: ent.id },
-					target: { id: rel.id },
-				});
-				this.graph.addCell(link);
-			}
-		});
+		this.createOrUpdateAttributes(node, rel);
 	}
 
 	createOrUpdateAttributes(node, entity) {
 		node.attributes.forEach((attr, _) => {
 			let attribute = null;
+			const card = this.util_create_cardinality(attr.cardinality);
 
 			switch (attr.type) {
 				case "identifier":
-					attribute = this.shapeFactory.createKey({});
+					attribute = this.factory.createKey({});
 					break;
 				case "simple":
-					attribute = this.shapeFactory.createAttribute({
-						cardinality: `(${attr.cardinality.min}, ${attr.cardinality.max})`,
+					attribute = this.factory.createAttribute({
+						cardinality: card,
 					});
 					break;
 				case "composed":
 				case "composed_att":
-					attribute = this.shapeFactory.createAttribute({});
+					attribute = this.factory.createAttribute({});
 					break;
 			}
 
 			let name = attr.name;
+
 			if (
 				attr.cardinality &&
 				(attr.cardinality.min !== "1" || attr.cardinality.max !== "1")
 			)
-				name += ` (${attr.cardinality.min}, ${attr.cardinality.max})`;
+				name += ` ${card}`;
 			attribute.attr("text/text", name);
+
 			this.graph.addCell(attribute);
-      
-			const link = this.shapeFactory.createLink({
-        source: { id: attribute.id },
-				target: { id: entity.id },
-			});
-			this.graph.addCell(link);
-      
-      if (attr.type === "composed") {
-        attribute.set("composed", true)
-        this.createOrUpdateAttributes(attr, attribute)
-      }
+			this.linker.createLink(attribute, entity, this.graph);
+
+			if (attr.type === "composed") {
+				attribute.set("composed", true);
+				this.createOrUpdateAttributes(attr, attribute);
+			}
 		});
+	}
+
+	util_create_cardinality(cardinality) {
+		if (cardinality) return `(${cardinality.min}, ${cardinality.max})`;
+		return "(1, 1)";
 	}
 
 	applyLayout() {

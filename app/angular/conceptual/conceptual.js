@@ -558,7 +558,7 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
 
 	ctrl.$postLink = () => {
 		buildWorkspace();
-    ctrl.generator = new DiagramGenerator(configs.graph, ctrl.shapeFactory, configs.paper);
+    ctrl.generator = new DiagramGenerator(configs.graph, ctrl.shapeFactory, ctrl.shapeLinker)
 	};
 
 	ctrl.$onInit = () => {

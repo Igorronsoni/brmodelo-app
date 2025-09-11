@@ -7,7 +7,7 @@ export default class SemanticInterpreter {
 	execute(ast) {
 		this.entities = [];
 		this.relationships = [];
-
+    
     for (const node of ast) {
 			switch (node.type) {
 				case "entity":
@@ -72,6 +72,8 @@ export default class SemanticInterpreter {
 	}
 
 	_checkRelationship(node) {
+    if (node.name == null) node.name = node.refs.map(item => item.name).join("-")
+
 		if (this.relationships.find((rel) => rel.name === node.name)) {
       throw Error(`Relationship '${node.name}' is already defined`);
 		}

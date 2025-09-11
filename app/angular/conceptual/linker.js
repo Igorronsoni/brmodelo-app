@@ -69,6 +69,7 @@ export default class Linker {
 		link2.attributes.type = "erd.Link";
 
 		rel.attributes.autorelationship = true;
+    return rel;
 	}
 
 	connectEntityExtension = (source, target, link) => {

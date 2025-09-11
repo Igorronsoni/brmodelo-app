@@ -58,12 +58,11 @@ var grammar = {
     {"name": "declaration", "symbols": ["rel_command"], "postprocess": id},
     {"name": "declaration", "symbols": ["note_command"], "postprocess": id},
     {"name": "declaration", "symbols": ["specialize_command"], "postprocess": id},
-    {"name": "entity_command", "symbols": [(lexer.has("ENTITY") ? {type: "ENTITY"} : ENTITY), "_", (lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", (lexer.has("LBRACE") ? {type: "LBRACE"} : LBRACE), "_", "attributes", "_", (lexer.has("RBRACE") ? {type: "RBRACE"} : RBRACE)], "postprocess":  ([,, name,,,, attrs,,]) => ({
-          type: "entity",
-          name: name.value,
-          attributes: attrs,
-          loc: { line: name.line, col: name.col, offset: name.offset 
-        } }) },
+    {"name": "entity_command", "symbols": [(lexer.has("ENTITY") ? {type: "ENTITY"} : ENTITY), "_", "identifier", "_", (lexer.has("LBRACE") ? {type: "LBRACE"} : LBRACE), "_", "attributes", "_", (lexer.has("RBRACE") ? {type: "RBRACE"} : RBRACE)], "postprocess":  ([,, name,,,, attrs,,]) => ({
+             type: "entity",
+             name: name,
+             attributes: attrs
+        }) },
     {"name": "attributes$ebnf$1", "symbols": []},
     {"name": "attributes$ebnf$1", "symbols": ["attributes$ebnf$1", "attribute"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "attributes", "symbols": ["attributes$ebnf$1"], "postprocess": (attrs) => attrs.flat()},
@@ -72,20 +71,19 @@ var grammar = {
     {"name": "attribute", "symbols": ["attribute$ebnf$1", "_", (lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", (lexer.has("SEMICOLON") ? {type: "SEMICOLON"} : SEMICOLON)], "postprocess":  ([card, , name]) => ({ 
           name: name.value, 
           type: "simple",
-          cardinality: card ?? { min: "1", max: "1" },
-          loc: { line: name.line, col: name.col, offset: name.offset } 
+          cardinality: card ?? { min: "1", max: "1" }
         }) },
     {"name": "attribute", "symbols": [(lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", (lexer.has("KEY") ? {type: "KEY"} : KEY), "_", (lexer.has("SEMICOLON") ? {type: "SEMICOLON"} : SEMICOLON)], "postprocess":  ([name]) => ({ 
           name: name.value, 
-          type: "identifier",
-          loc: { line: name.line, col: name.col, offset: name.offset } 
+          type: "identifier"
         }) },
     {"name": "attribute", "symbols": [(lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", (lexer.has("COMPOSED") ? {type: "COMPOSED"} : COMPOSED), "_", (lexer.has("LBRACE") ? {type: "LBRACE"} : LBRACE), "_", "attributes_composed", "_", (lexer.has("RBRACE") ? {type: "RBRACE"} : RBRACE)], "postprocess":  ([name, _, _1, _2, _3, _4, attrs]) => ({
           name: name.value, 
           type: "composed",
-          attributes: attrs ?? [],
-          loc: { line: name.line, col: name.col, offset: name.offset } 
+          attributes: attrs ?? []
         }) },
+    {"name": "identifier", "symbols": [(lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER)], "postprocess": ([value]) => value.value},
+    {"name": "identifier", "symbols": [(lexer.has("STRING") ? {type: "STRING"} : STRING)], "postprocess": ([value]) => value.value},
     {"name": "cardinality", "symbols": [(lexer.has("LPAREN") ? {type: "LPAREN"} : LPAREN), "_", "zero_or_one", "_", (lexer.has("COMMA") ? {type: "COMMA"} : COMMA), "_", "one_or_n", "_", (lexer.has("RPAREN") ? {type: "RPAREN"} : RPAREN)], "postprocess":  ([, , min, , , , max]) => ({
             min: min.value,
             max: max.value
@@ -98,22 +96,21 @@ var grammar = {
     {"name": "attribute_composed", "symbols": ["attribute_composed$ebnf$1", "_", (lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", (lexer.has("SEMICOLON") ? {type: "SEMICOLON"} : SEMICOLON)], "postprocess":  ([card, , name]) => ({
             name: name.value,
             type: "composed_att",
-            cardinality: card ?? { min: "1", max: "1" },
-            loc: { line: name.line, col: name.col, offset: name.offset }
+            cardinality: card ?? { min: "1", max: "1" }
         }) },
     {"name": "assentity_command", "symbols": [(lexer.has("ASSENTITY") ? {type: "ASSENTITY"} : ASSENTITY), "_", (lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", (lexer.has("SEMICOLON") ? {type: "SEMICOLON"} : SEMICOLON)], "postprocess":  ([,, name]) => ({
           type: "assentity",
-          relationship: name.value,
-          loc: { line: name.line, col: name.col, offset: name.offset } 
+          relationship: name.value
         }) },
-    {"name": "rel_command$ebnf$1", "symbols": ["rel_attributes"], "postprocess": id},
+    {"name": "rel_command$ebnf$1", "symbols": ["identifier"], "postprocess": id},
     {"name": "rel_command$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "rel_command", "symbols": [(lexer.has("REL") ? {type: "REL"} : REL), "_", (lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", "rel_command$ebnf$1", "_", (lexer.has("GGT") ? {type: "GGT"} : GGT), "_", "rel_entities", "_", (lexer.has("SEMICOLON") ? {type: "SEMICOLON"} : SEMICOLON)], "postprocess":  ([,, name,, attrs,,,, refs]) => ({
+    {"name": "rel_command$ebnf$2", "symbols": ["rel_attributes"], "postprocess": id},
+    {"name": "rel_command$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "rel_command", "symbols": [(lexer.has("REL") ? {type: "REL"} : REL), "_", "rel_command$ebnf$1", "_", "rel_command$ebnf$2", "_", (lexer.has("GGT") ? {type: "GGT"} : GGT), "_", "rel_entities", "_", (lexer.has("SEMICOLON") ? {type: "SEMICOLON"} : SEMICOLON)], "postprocess":  ([,, name,, attrs,,,, refs]) => ({
             type: "relationship",
-            name: name.value,
+            name: name,
             attributes: attrs ?? [],
-            refs: refs,
-            loc: { line: name.line, col: name.col, offset: name.offset } 
+            refs: refs
         }) },
     {"name": "rel_attributes", "symbols": [(lexer.has("LBRACE") ? {type: "LBRACE"} : LBRACE), "_", "attributes", "_", (lexer.has("RBRACE") ? {type: "RBRACE"} : RBRACE)], "postprocess": ([,, attrs]) => attrs},
     {"name": "rel_entities$ebnf$1", "symbols": []},
@@ -126,13 +123,12 @@ var grammar = {
     {"name": "rel_entity_ref$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "rel_entity_ref$ebnf$3", "symbols": ["optional_role"], "postprocess": id},
     {"name": "rel_entity_ref$ebnf$3", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "rel_entity_ref", "symbols": ["rel_entity_ref$ebnf$1", "_", (lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER), "_", "rel_entity_ref$ebnf$2", "_", "rel_entity_ref$ebnf$3"], "postprocess":  ([card, , name, ,weak, ,role]) => ({
+    {"name": "rel_entity_ref", "symbols": ["rel_entity_ref$ebnf$1", "_", "identifier", "_", "rel_entity_ref$ebnf$2", "_", "rel_entity_ref$ebnf$3"], "postprocess":  ([card, , name, ,weak, ,role]) => ({
             type: "entity_ref",
-            name: name.value,
+            name: name,
             cardinality: card ?? { min: "0", max: "n" },
             weak: weak ?? false,
-            role: role ?? null,
-            loc: { line: name.line, col: name.col, offset: name.offset }  
+            role: role ?? null
         }) },
     {"name": "zero_or_one", "symbols": [(lexer.has("ZERO") ? {type: "ZERO"} : ZERO)], "postprocess": ([token]) => ({ value: token.value })},
     {"name": "zero_or_one", "symbols": [(lexer.has("ONE") ? {type: "ONE"} : ONE)], "postprocess": ([token]) => ({ value: token.value })},
@@ -151,8 +147,7 @@ var grammar = {
           type: "specialize",
           ref: ref,
           notation: notation || { type: "t", disjunction: "d" },
-          specs: list,
-          loc: { line: command.line, col: command.col, offset: command.offset }
+          specs: list
         }) },
     {"name": "specialize_types", "symbols": [(lexer.has("LPAREN") ? {type: "LPAREN"} : LPAREN), "_", "t_or_p", "_", (lexer.has("COMMA") ? {type: "COMMA"} : COMMA), "_", "d_or_c", "_", (lexer.has("RPAREN") ? {type: "RPAREN"} : RPAREN)], "postprocess":  ([,, type,,,, disjunction]) => ({
             type: type.value,
@@ -174,15 +169,14 @@ var grammar = {
     {"name": "specialize_entity_list$ebnf$1$subexpression$1", "symbols": ["_", (lexer.has("COMMA") ? {type: "COMMA"} : COMMA), "_", "specialize_entity_ref"]},
     {"name": "specialize_entity_list$ebnf$1", "symbols": ["specialize_entity_list$ebnf$1", "specialize_entity_list$ebnf$1$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "specialize_entity_list", "symbols": ["specialize_entity_ref", "specialize_entity_list$ebnf$1"], "postprocess": ([first, rest]) => [first, ...rest.map(r => r[3])]},
-    {"name": "specialize_entity_ref", "symbols": [(lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER)], "postprocess": ([name]) => ({ type: "ref", name: name.value, loc: { line: name.line, col: name.col, offset: name.offset } })},
+    {"name": "specialize_entity_ref", "symbols": [(lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER)], "postprocess": ([name]) => ({ type: "ref", name: name.value })},
     {"name": "specialize_entity_ref", "symbols": ["entity_command"], "postprocess": id},
     {"name": "note_command$ebnf$1", "symbols": ["optional_color"], "postprocess": id},
     {"name": "note_command$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "note_command", "symbols": [(lexer.has("NOTE") ? {type: "NOTE"} : NOTE), "_", (lexer.has("STRING") ? {type: "STRING"} : STRING), "_", "note_command$ebnf$1", "_", (lexer.has("SEMICOLON") ? {type: "SEMICOLON"} : SEMICOLON)], "postprocess":  ([_, , string, , color]) => ({
             type: "note",
             value: string.value,
-            color: color ?? null,
-            loc: { line: string.line, col: string.col, offset: string.offset }
+            color: color ?? null
         }) },
     {"name": "optional_color", "symbols": [(lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER)], "postprocess": ([value]) => value.value},
     {"name": "_$ebnf$1", "symbols": []},

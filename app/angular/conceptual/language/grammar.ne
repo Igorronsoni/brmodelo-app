@@ -10,32 +10,31 @@ declaration ->  entity_command     {% id %}
               | specialize_command {% id %}
 
 # COMMANDS - ENTITY
-entity_command -> %ENTITY _ %IDENTIFIER _ %LBRACE _ attributes _ %RBRACE {% ([,, name,,,, attrs,,]) => ({
+entity_command -> %ENTITY _ identifier _ %LBRACE _ attributes _ %RBRACE {% ([,, name,,,, attrs,,]) => ({
                                                                             type: "entity",
-                                                                            name: name.value,
-                                                                            attributes: attrs,
-                                                                            loc: { line: name.line, col: name.col, offset: name.offset 
-                                                                          } }) %}
+                                                                            name: name,
+                                                                            attributes: attrs
+                                                                          }) %}
 
 attributes -> attribute:*  {% (attrs) => attrs.flat() %}
 
 attribute ->  cardinality:? _ %IDENTIFIER  _ %SEMICOLON                                               {% ([card, , name]) => ({ 
                                                                                                         name: name.value, 
                                                                                                         type: "simple",
-                                                                                                        cardinality: card ?? { min: "1", max: "1" },
-                                                                                                        loc: { line: name.line, col: name.col, offset: name.offset } 
+                                                                                                        cardinality: card ?? { min: "1", max: "1" }
                                                                                                       }) %}
             | %IDENTIFIER _ %KEY _ %SEMICOLON                                                          {% ([name]) => ({ 
                                                                                                         name: name.value, 
-                                                                                                        type: "identifier",
-                                                                                                        loc: { line: name.line, col: name.col, offset: name.offset } 
+                                                                                                        type: "identifier"
                                                                                                       }) %}
             | %IDENTIFIER _ %COMPOSED  _ %LBRACE _ attributes_composed _ %RBRACE                      {% ([name, _, _1, _2, _3, _4, attrs]) => ({
                                                                                                         name: name.value, 
                                                                                                         type: "composed",
-                                                                                                        attributes: attrs ?? [],
-                                                                                                        loc: { line: name.line, col: name.col, offset: name.offset } 
+                                                                                                        attributes: attrs ?? []
                                                                                                       }) %}
+
+identifier ->   %IDENTIFIER {% ([value]) => value.value %}
+              | %STRING     {% ([value]) => value.value %}
 
 cardinality -> %LPAREN _ zero_or_one _ %COMMA _ one_or_n _ %RPAREN    {% ([, , min, , , , max]) => ({
                                                                           min: min.value,
@@ -48,36 +47,32 @@ attributes_composed -> attribute_composed:*  {% (attrs) => attrs.flat() %}
 attribute_composed -> cardinality:? _ %IDENTIFIER _ %SEMICOLON  {% ([card, , name]) => ({
                                                     name: name.value,
                                                     type: "composed_att",
-                                                    cardinality: card ?? { min: "1", max: "1" },
-                                                    loc: { line: name.line, col: name.col, offset: name.offset }
+                                                    cardinality: card ?? { min: "1", max: "1" }
                                                 }) %}
 
 # COMMANDS - ASSENTITY
 assentity_command -> %ASSENTITY _ %IDENTIFIER _ %SEMICOLON    {% ([,, name]) => ({
                                                                 type: "assentity",
-                                                                relationship: name.value,
-                                                                loc: { line: name.line, col: name.col, offset: name.offset } 
+                                                                relationship: name.value
                                                               }) %}
 
 # COMMANDS - RELATIONSHIP
-rel_command -> %REL _ %IDENTIFIER _ rel_attributes:? _ %GGT _ rel_entities _ %SEMICOLON   {% ([,, name,, attrs,,,, refs]) => ({
+rel_command -> %REL _ identifier:? _ rel_attributes:? _ %GGT _ rel_entities _ %SEMICOLON   {% ([,, name,, attrs,,,, refs]) => ({
                                                                                                             type: "relationship",
-                                                                                                            name: name.value,
+                                                                                                            name: name,
                                                                                                             attributes: attrs ?? [],
-                                                                                                            refs: refs,
-                                                                                                            loc: { line: name.line, col: name.col, offset: name.offset } 
+                                                                                                            refs: refs
                                                                                                         }) %}
 rel_attributes -> %LBRACE _ attributes _ %RBRACE  {% ([,, attrs]) => attrs %}
 
 rel_entities -> rel_entity_ref (_ %COMMA _ rel_entity_ref):* {% ([first, rest]) => [first, ...rest.map(r => r[3])] %}
 
-rel_entity_ref -> cardinality:? _ %IDENTIFIER _ optional_weak:? _ optional_role:?   {% ([card, , name, ,weak, ,role]) => ({
+rel_entity_ref -> cardinality:? _ identifier _ optional_weak:? _ optional_role:?   {% ([card, , name, ,weak, ,role]) => ({
                                                                                         type: "entity_ref",
-                                                                                        name: name.value,
+                                                                                        name: name,
                                                                                         cardinality: card ?? { min: "0", max: "n" },
                                                                                         weak: weak ?? false,
-                                                                                        role: role ?? null,
-                                                                                        loc: { line: name.line, col: name.col, offset: name.offset }  
+                                                                                        role: role ?? null
                                                                                     }) %}
 
 zero_or_one ->  %ZERO {% ([token]) => ({ value: token.value }) %}
@@ -99,8 +94,7 @@ specialize_command -> %SPECIALIZE _ specialize_types:? _ specialize_entity_ref _
                                                                                                                                 type: "specialize",
                                                                                                                                 ref: ref,
                                                                                                                                 notation: notation || { type: "t", disjunction: "d" },
-                                                                                                                                specs: list,
-                                                                                                                                loc: { line: command.line, col: command.col, offset: command.offset }
+                                                                                                                                specs: list
                                                                                                                               }) %}
 
 specialize_types -> %LPAREN _ t_or_p _ %COMMA _ d_or_c _ %RPAREN    {% ([,, type,,,, disjunction]) => ({
@@ -124,7 +118,7 @@ d_or_c ->  %IDENTIFIER  {% ([token]) => {
 
 specialize_entity_list -> specialize_entity_ref (_ %COMMA _ specialize_entity_ref):* {% ([first, rest]) => [first, ...rest.map(r => r[3])] %}
 
-specialize_entity_ref ->  %IDENTIFIER         {% ([name]) => ({ type: "ref", name: name.value, loc: { line: name.line, col: name.col, offset: name.offset } }) %}
+specialize_entity_ref ->  %IDENTIFIER         {% ([name]) => ({ type: "ref", name: name.value }) %}
                         | entity_command      {% id %}
 
 
@@ -132,8 +126,7 @@ specialize_entity_ref ->  %IDENTIFIER         {% ([name]) => ({ type: "ref", nam
 note_command -> %NOTE _ %STRING _ optional_color:? _ %SEMICOLON {% ([_, , string, , color]) => ({
                                         type: "note",
                                         value: string.value,
-                                        color: color ?? null,
-                                        loc: { line: string.line, col: string.col, offset: string.offset }
+                                        color: color ?? null
                                     }) %}
 
 optional_color -> %IDENTIFIER {% ([value]) => value.value %}
