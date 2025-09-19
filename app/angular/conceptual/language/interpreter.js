@@ -79,7 +79,10 @@ export default class SemanticInterpreter {
 		}
 
 		for (const re of node.refs) {
-			if (!this.entities.find((et) => et.name === re.name)) {
+      const entity = this.entities.find((et) => et.name === re.name)
+      const rel = this.relationships.find((r) => r.name === re.name && r.isAssEntity)
+
+			if (!entity && !rel) {
         throw Error(`Entity '${re.name}' is not defined`);
 			}
 		}
@@ -99,7 +102,7 @@ export default class SemanticInterpreter {
 		const index = this.relationships.findIndex(
 			(rel) => rel.name === node.relationship,
 		);
-		this.relationships[index].type = node.type;
+		this.relationships[index].isAssEntity = true;
 	}
   
 	_checkSpecialize(node) {}

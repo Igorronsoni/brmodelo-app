@@ -13,9 +13,11 @@ class DiagramGenerator {
 		this.linker = linker;
 
 		this.entities = new Map();
+		this.relationships = new Map();
+		this.assentity = new Map();
 	}
 
-	generate(ast) {
+	execute(ast) {
 		this.graph.clear();
 
 		ast.forEach((node) => {
@@ -25,6 +27,9 @@ class DiagramGenerator {
 					break;
 				case "relationship":
 					this.createOrUpdateRelationship(node);
+					break;
+				case "assentity":
+					this.createRelationshipAssociative(node);
 					break;
 			}
 		});
@@ -62,19 +67,36 @@ class DiagramGenerator {
 			rel = this.factory.createRelationship({
 				attrs: { text: { text: node.name } },
 			});
+
 			this.graph.addCell(rel);
+
 			node.refs.forEach((entity) => {
 				const ent = this.entities.get(entity.name);
+				const ass = this.assentity.get(entity.name);
 				const card = this.util_create_cardinality(entity.cardinality);
 
-				if (ent) {
-					const link = this.linker.createLink(ent, rel, this.graph);
+				if (ent || ass) {
+					const link = this.linker.createLink(ent ?? ass, rel, this.graph);
 					link.label(0, { attrs: { text: { text: card } } });
 				}
 			});
 		}
 
 		this.createOrUpdateAttributes(node, rel);
+		this.relationships.set(node.name, rel);
+	}
+
+	createRelationshipAssociative(node) {
+		const rel = this.relationships.get(node.relationship);
+		if (rel !== null) {
+			const block = this.factory.createBlockAssociative({});
+			this.graph.addCell(block);
+
+			block.embed(rel);
+			rel.toFront();
+
+			this.assentity.set(node.relationship, block);
+		}
 	}
 
 	createOrUpdateAttributes(node, entity) {
@@ -87,13 +109,11 @@ class DiagramGenerator {
 					attribute = this.factory.createKey({});
 					break;
 				case "simple":
+				case "composed":
+				case "composed_att":
 					attribute = this.factory.createAttribute({
 						cardinality: card,
 					});
-					break;
-				case "composed":
-				case "composed_att":
-					attribute = this.factory.createAttribute({});
 					break;
 			}
 
@@ -123,16 +143,41 @@ class DiagramGenerator {
 
 	applyLayout() {
 		const cells = this.graph.getCells();
-		const nodes = cells.filter((c) => c.isElement());
+		const nodes = cells.filter(
+			(c) => c.isElement() && !c.get("parent") && c != null,
+		);
 		const links = cells.filter((c) => c.isLink());
 
 		const g = new dagre.graphlib.Graph();
-		g.setGraph({ rankdir: "LR" });
+		g.setGraph({ rankdir: "TB" });
 		g.setDefaultEdgeLabel(() => ({}));
 
 		nodes.forEach((n) => {
 			const size = n.get("size");
 			g.setNode(n.id, { width: size.width, height: size.height });
+		});
+
+		const virtualBlocks = new Map();
+		this.assentity.forEach((block, relName) => {
+			const blockSize = block.size();
+			const virtualId = `block_${relName}`;
+			g.setNode(virtualId, {
+				width: blockSize.width,
+				height: blockSize.height,
+			});
+			virtualBlocks.set(relName, virtualId);
+
+			const rel = this.relationships.get(relName);
+			const connectedLinks = this.graph.getConnectedLinks(rel);
+			connectedLinks.forEach((link) => {
+				const otherEl =
+					link.getSourceElement() === rel
+						? link.getTargetElement()
+						: link.getSourceElement();
+				if (otherEl) {
+					g.setEdge(virtualId, otherEl.id);
+				}
+			});
 		});
 
 		links.forEach((l) => {
@@ -141,25 +186,35 @@ class DiagramGenerator {
 
 		dagre.layout(g);
 
-		let minX = Infinity,
-			minY = Infinity;
 		g.nodes().forEach((id) => {
-			const pos = g.node(id);
-			minX = Math.min(minX, pos.x);
-			minY = Math.min(minY, pos.y);
-		});
-
-		const offsetX = 50 - minX;
-		const offsetY = 50 - minY;
-
-		g.nodes().forEach((id) => {
+			if (id.startsWith("block_")) return;
 			const node = this.graph.getCell(id);
 			const pos = g.node(id);
-			if (node) {
+			if (node && pos) {
 				node.position(
-					pos.x - node.size().width / 2 + offsetX,
-					pos.y - node.size().height / 2 + offsetY,
+					pos.x - node.size().width / 2,
+					pos.y - node.size().height / 2,
 				);
+			}
+		});
+
+		this.assentity.forEach((block, relName) => {
+			const virtualId = virtualBlocks.get(relName);
+			const pos = g.node(virtualId);
+			if (block && pos) {
+				block.position(
+					pos.x - block.size().width / 2,
+					pos.y - block.size().height / 2,
+				);
+				const rel = this.relationships.get(relName);
+				if (rel) {
+					rel.position(
+						(block.size().width - rel.size().width) / 2,
+						(block.size().height - rel.size().height) / 2,
+						{ parentRelative: true },
+					);
+					rel.toFront();
+				}
 			}
 		});
 	}
