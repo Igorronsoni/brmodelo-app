@@ -36,6 +36,7 @@ import tokens from './language/tokens';
 import grammar from "./language/grammar.cjs";
 import SemanticInterpreter from "./language/interpreter";
 import DiagramGenerator from "./language/diagramGenerator"
+import Transformation from "./language/transformation";
 
 const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibModal, $state, $transitions, preventExitService, $filter) {
 	const ctrl = this;
@@ -558,7 +559,7 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
 
 	ctrl.$postLink = () => {
 		buildWorkspace();
-    ctrl.generator = new DiagramGenerator(configs.graph, ctrl.shapeFactory, ctrl.shapeLinker)
+    ctrl.generator = new DiagramGenerator(configs.graph, ctrl.shapeFactory, ctrl.shapeLinker, ctrl.shapeValidator)
 	};
 
 	ctrl.$onInit = () => {
@@ -572,6 +573,7 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
     ctrl.languageTokens = tokens;
     ctrl.grammar = grammar;
     ctrl.semanticInterpreter = new SemanticInterpreter();
+    ctrl.transformation = new Transformation();
     ctrl.generator = null;
 
 		ctrl.setLoading(true);
@@ -603,6 +605,7 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
     ctrl.languageTokens = null;
     ctrl.grammar = null;
     ctrl.semanticInterpreter = null;
+    ctrl.transformation = null;
     ctrl.generator = null;
 		configs.graph = null;
 		configs.paper = null;
@@ -615,7 +618,8 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
 
   this.interpreter = function (result) {
     ctrl.semanticInterpreter.execute(result);
-    ctrl.generator.generate(result);
+    const model = ctrl.transformation.execute(result)
+    ctrl.generator.execute(model);
   };
 };
 

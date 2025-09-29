@@ -68,7 +68,7 @@ rel_attributes -> %LBRACE _ attributes _ %RBRACE  {% ([,, attrs]) => attrs %}
 rel_entities -> rel_entity_ref (_ %COMMA _ rel_entity_ref):* {% ([first, rest]) => [first, ...rest.map(r => r[3])] %}
 
 rel_entity_ref -> cardinality:? _ identifier _ optional_weak:? _ optional_role:?   {% ([card, , name, ,weak, ,role]) => ({
-                                                                                        type: "entity_ref",
+                                                                                        type: "entity",
                                                                                         name: name,
                                                                                         cardinality: card ?? { min: "0", max: "n" },
                                                                                         weak: weak ?? false,

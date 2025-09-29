@@ -124,7 +124,7 @@ var grammar = {
     {"name": "rel_entity_ref$ebnf$3", "symbols": ["optional_role"], "postprocess": id},
     {"name": "rel_entity_ref$ebnf$3", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "rel_entity_ref", "symbols": ["rel_entity_ref$ebnf$1", "_", "identifier", "_", "rel_entity_ref$ebnf$2", "_", "rel_entity_ref$ebnf$3"], "postprocess":  ([card, , name, ,weak, ,role]) => ({
-            type: "entity_ref",
+            type: "entity",
             name: name,
             cardinality: card ?? { min: "0", max: "n" },
             weak: weak ?? false,
