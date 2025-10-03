@@ -149,7 +149,7 @@ class DiagramGenerator {
 		this.graph.addCell(entity);
 		entity.attr("text/text", node.name);
 
-		if (node.attributes && node.attributes.length > 0) {
+    if (node.attributes && node.attributes.length > 0) {
 			node.attributes.forEach((attr) => {
 				this._addAttribute(attr, entity);
 			});
@@ -247,14 +247,13 @@ class DiagramGenerator {
 			block.set("type", "erd.Associative");
 
 			rel.toFront();
-
 			this.elements.set(node.type + "_" + node.relationship, block);
 		}
 	}
 
 	_addSpecialize(node) {
 		const isa = this.factory.createIsa({});
-		isa.position(300, 300);
+		console.log(node)
 		this.graph.addCell(isa);
 		this.elements.set(node.ref.name, isa);
 
@@ -291,15 +290,28 @@ class DiagramGenerator {
 
 			const connected = this.graph.getConnectedLinks(cell);
 
+			if (this.validator.isAssociative(cell)) continue;
+			if (this.validator.isRelationship(cell)) {
+				const parent = cell.get("parent");
+				if (parent) {
+					const parentCell = this.graph.getCell(parent);
+					if (parentCell && this.validator.isAssociative(parentCell)) {
+						continue;
+					}
+				}
+				
+				if (connected.length > 0) {
+					continue;
+				}
+			}
+
 			if (connected.length === 0) {
 				const key = cell.attr("label/text") || cell.id;
 				cell.remove();
 				this.elements.delete(key);
 			}
 
-			const type = cell.get("type");
-
-			if (type === "erd.ComposedAttribute") {
+			if (this.validator.isComposedAttribute(cell)) {
 				const hasParentMain = connected.some((link) => {
 					const src = link.getSourceElement();
 					const tgt = link.getTargetElement();
@@ -344,7 +356,7 @@ class DiagramGenerator {
 		const links = cells.filter((c) => c.isLink());
 
 		const g = new dagre.graphlib.Graph();
-		g.setGraph({ rankdir: "TB" });
+		g.setGraph({ rankdir: "LR" });
 		g.setDefaultEdgeLabel(() => ({}));
 
 		nodes.forEach((n) => {
