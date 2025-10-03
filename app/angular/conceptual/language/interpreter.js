@@ -105,5 +105,15 @@ export default class SemanticInterpreter {
 		this.relationships[index].isAssEntity = true;
 	}
   
-	_checkSpecialize(node) {}
+	_checkSpecialize(node) {
+		if (!this.entities.find((entity) => entity.name === node.ref)) {
+			throw Error(`Parent entity '${node.ref.name}' is not defined`);
+		}
+
+		for (const spec of node.specs) {
+			if (!this.entities.find((entity) => entity.name === spec.name)) {
+				throw Error(`Child entity '${spec.name}' is not defined`);
+			}
+		}
+	}
 }
