@@ -93,14 +93,14 @@ class DiagramGenerator {
 			case "specializes":
 				this._addSpecialize(item.data);
 				break;
-			case "notes":
-				this._addNote(item.data);
-				break;
 		}
 	}
 
 	_removeElement(item) {
-		const key = item.data.type + "_" + (item.data.name || item.data.value || item.data.ref);
+		const key =
+			item.data.type +
+			"_" +
+			(item.data.name || item.data.value || item.data.ref);
 		const cell = this.elements.get(key);
 
 		if (!cell) return;
@@ -149,7 +149,7 @@ class DiagramGenerator {
 		this.graph.addCell(entity);
 		entity.attr("text/text", node.name);
 
-    if (node.attributes && node.attributes.length > 0) {
+		if (node.attributes && node.attributes.length > 0) {
 			node.attributes.forEach((attr) => {
 				this._addAttribute(attr, entity);
 			});
@@ -216,12 +216,30 @@ class DiagramGenerator {
 
 			node.refs.forEach((refs) => {
 				const entity = this.elements.get("entity_" + refs.name);
-        const assentity = this.elements.get("assentity_" + refs.name);
+				const assentity = this.elements.get("assentity_" + refs.name);
 				const card = this._create_cardinality(refs.cardinality);
 
-        if (entity || assentity) {
-					const link = this.linker.createLink(entity ?? assentity, rel, this.graph);
-					link.label(0, { attrs: { text: { text: card } } });
+				if (entity || assentity) {
+					const link = this.linker.createLink(
+						entity ?? assentity,
+						rel,
+						this.graph,
+					);
+
+					if (refs.weak) {
+						link.attributes.weak = refs.weak;
+						link.attributes.attrs = {
+							".connection": { stroke: "black", "stroke-width": 3 },
+						};
+					}
+					if (refs.role) {
+						link.attributes.role = refs.role;
+						link.label(1, {
+							position: 0.7,
+							attrs: { text: { text: refs.role } },
+						});
+					}
+					link.label(0, { position: 0.3, attrs: { text: { text: card } } });
 				}
 			});
 		}
@@ -254,7 +272,7 @@ class DiagramGenerator {
 		const isa = this.factory.createIsa({});
 		isa.attributes.attrs.text.text = this._create_notation(node.notation);
 
-    this.graph.addCell(isa);
+		this.graph.addCell(isa);
 
 		this.elements.set(node.type + "_" + node.ref, isa);
 
@@ -262,8 +280,8 @@ class DiagramGenerator {
 		if (reference) {
 			this.linker.createLink(isa, reference, this.graph);
 		}
-    
-    reference.attributes.isExtended = true;
+
+		reference.attributes.isExtended = true;
 		isa.attributes.parentId = reference.attributes.id;
 
 		for (const spec of node.specs) {
@@ -272,18 +290,6 @@ class DiagramGenerator {
 				this.linker.createLink(isa, child, this.graph);
 			}
 		}
-	}
-
-	_addNote(note) {
-		const shape = this.factory.createEntity({
-			attrs: {
-				label: { text: note.value },
-				body: { fill: note.color || "#ffffaa" },
-			},
-		});
-		shape.position(400, 400);
-		this.graph.addCell(shape);
-		this.elements.set(note.value, shape);
 	}
 
 	_cleanupOrphans() {
@@ -303,7 +309,7 @@ class DiagramGenerator {
 						continue;
 					}
 				}
-				
+
 				if (connected.length > 0) {
 					continue;
 				}
@@ -315,7 +321,7 @@ class DiagramGenerator {
 				this.elements.delete(key);
 			}
 
-      if (cell.attributes.composed) {
+			if (cell.attributes.composed) {
 				const hasParentMain = connected.some((link) => {
 					const src = link.getSourceElement();
 					const tgt = link.getTargetElement();
@@ -352,7 +358,7 @@ class DiagramGenerator {
 		return "(1, 1)";
 	}
 
-  _create_notation(notation) {
+	_create_notation(notation) {
 		if (notation) return `(${notation.type}, ${notation.disjunction})`;
 		return "(t, d)";
 	}
@@ -384,9 +390,7 @@ class DiagramGenerator {
 				height: blockSize.height,
 			});
 			virtualBlocks.set(key, virtualId);
-			const rel = this.elements.get(
-				key.replace("assentity_", "relationship_"),
-			);
+			const rel = this.elements.get(key.replace("assentity_", "relationship_"));
 
 			if (rel && this.validator.isRelationship(rel)) {
 				const connectedLinks = this.graph.getConnectedLinks(rel);
