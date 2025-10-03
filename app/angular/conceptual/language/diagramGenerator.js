@@ -100,7 +100,7 @@ class DiagramGenerator {
 	}
 
 	_removeElement(item) {
-		const key = item.data.type + "_" + (item.data.name || item.data.value);
+		const key = item.data.type + "_" + (item.data.name || item.data.value || item.data.ref);
 		const cell = this.elements.get(key);
 
 		if (!cell) return;
@@ -183,7 +183,6 @@ class DiagramGenerator {
 
 		if (attr.type === "composed") {
 			attrShape.set("composed", true);
-			attrShape.set("type", "erd.ComposedAttribute");
 
 			attr.attributes.forEach((attrc) => {
 				this._addAttribute(attrc, attrShape);
@@ -253,17 +252,22 @@ class DiagramGenerator {
 
 	_addSpecialize(node) {
 		const isa = this.factory.createIsa({});
-		console.log(node)
-		this.graph.addCell(isa);
-		this.elements.set(node.ref.name, isa);
+		isa.attributes.attrs.text.text = this._create_notation(node.notation);
 
-		const parent = this.elements.get(node.ref.name);
-		if (parent) {
-			this.linker.createLink(parent, isa, this.graph);
+    this.graph.addCell(isa);
+
+		this.elements.set(node.type + "_" + node.ref, isa);
+
+		const reference = this.elements.get("entity_" + node.ref);
+		if (reference) {
+			this.linker.createLink(isa, reference, this.graph);
 		}
+    
+    reference.attributes.isExtended = true;
+		isa.attributes.parentId = reference.attributes.id;
 
 		for (const spec of node.specs) {
-			const child = this.elements.get(spec.name);
+			const child = this.elements.get("entity_" + spec.name);
 			if (child) {
 				this.linker.createLink(isa, child, this.graph);
 			}
@@ -311,7 +315,7 @@ class DiagramGenerator {
 				this.elements.delete(key);
 			}
 
-			if (this.validator.isComposedAttribute(cell)) {
+      if (cell.attributes.composed) {
 				const hasParentMain = connected.some((link) => {
 					const src = link.getSourceElement();
 					const tgt = link.getTargetElement();
@@ -346,6 +350,11 @@ class DiagramGenerator {
 	_create_cardinality(cardinality) {
 		if (cardinality) return `(${cardinality.min}, ${cardinality.max})`;
 		return "(1, 1)";
+	}
+
+  _create_notation(notation) {
+		if (notation) return `(${notation.type}, ${notation.disjunction})`;
+		return "(t, d)";
 	}
 
 	applyLayout() {

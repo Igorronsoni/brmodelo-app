@@ -145,7 +145,7 @@ var grammar = {
     {"name": "specialize_command$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "specialize_command", "symbols": [(lexer.has("SPECIALIZE") ? {type: "SPECIALIZE"} : SPECIALIZE), "_", "specialize_command$ebnf$1", "_", "specialize_entity_ref", "_", (lexer.has("GGT") ? {type: "GGT"} : GGT), "_", "specialize_entity_list", "_", (lexer.has("SEMICOLON") ? {type: "SEMICOLON"} : SEMICOLON)], "postprocess":  ([command,, notation,, ref,,,, list]) => ({
           type: "specialize",
-          ref: ref,
+          ref: ref.name,
           notation: notation || { type: "t", disjunction: "d" },
           specs: list
         }) },
@@ -169,8 +169,7 @@ var grammar = {
     {"name": "specialize_entity_list$ebnf$1$subexpression$1", "symbols": ["_", (lexer.has("COMMA") ? {type: "COMMA"} : COMMA), "_", "specialize_entity_ref"]},
     {"name": "specialize_entity_list$ebnf$1", "symbols": ["specialize_entity_list$ebnf$1", "specialize_entity_list$ebnf$1$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "specialize_entity_list", "symbols": ["specialize_entity_ref", "specialize_entity_list$ebnf$1"], "postprocess": ([first, rest]) => [first, ...rest.map(r => r[3])]},
-    {"name": "specialize_entity_ref", "symbols": [(lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER)], "postprocess": ([name]) => ({ type: "ref", name: name.value })},
-    {"name": "specialize_entity_ref", "symbols": ["entity_command"], "postprocess": id},
+    {"name": "specialize_entity_ref", "symbols": [(lexer.has("IDENTIFIER") ? {type: "IDENTIFIER"} : IDENTIFIER)], "postprocess": ([name]) => ({ type: "entity", name: name.value })},
     {"name": "note_command$ebnf$1", "symbols": ["optional_color"], "postprocess": id},
     {"name": "note_command$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "note_command", "symbols": [(lexer.has("NOTE") ? {type: "NOTE"} : NOTE), "_", (lexer.has("STRING") ? {type: "STRING"} : STRING), "_", "note_command$ebnf$1", "_", (lexer.has("SEMICOLON") ? {type: "SEMICOLON"} : SEMICOLON)], "postprocess":  ([_, , string, , color]) => ({

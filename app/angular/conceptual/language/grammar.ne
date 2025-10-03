@@ -92,7 +92,7 @@ optional_role -> %STRING {% ([value]) => value.value %}
 # COMMANDS - SPECIALIZE
 specialize_command -> %SPECIALIZE _ specialize_types:? _ specialize_entity_ref _ %GGT _ specialize_entity_list _ %SEMICOLON  {% ([command,, notation,, ref,,,, list]) => ({
                                                                                                                                 type: "specialize",
-                                                                                                                                ref: ref,
+                                                                                                                                ref: ref.name,
                                                                                                                                 notation: notation || { type: "t", disjunction: "d" },
                                                                                                                                 specs: list
                                                                                                                               }) %}
@@ -118,9 +118,7 @@ d_or_c ->  %IDENTIFIER  {% ([token]) => {
 
 specialize_entity_list -> specialize_entity_ref (_ %COMMA _ specialize_entity_ref):* {% ([first, rest]) => [first, ...rest.map(r => r[3])] %}
 
-specialize_entity_ref ->  %IDENTIFIER         {% ([name]) => ({ type: "ref", name: name.value }) %}
-                        | entity_command      {% id %}
-
+specialize_entity_ref ->  %IDENTIFIER         {% ([name]) => ({ type: "entity", name: name.value }) %}
 
 # COMMANDS - NOTE
 note_command -> %NOTE _ %STRING _ optional_color:? _ %SEMICOLON {% ([_, , string, , color]) => ({
