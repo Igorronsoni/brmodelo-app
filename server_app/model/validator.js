@@ -23,7 +23,7 @@ const getMessages = () => {
 const isString = (value) => typeof value === "string" || value instanceof String;
 const isNull = (value) => value == null || value == "";
 
-const validateSaveParams = ({ name, type, model, userId }) => {
+const validateSaveParams = ({ name, type, model, userId, textModel }) => {
 	if (isNull(name)) {
 		return new ValidationResponse(false, MESSAGES.MISSING_NAME);
 	}

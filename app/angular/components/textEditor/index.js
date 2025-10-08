@@ -68,9 +68,19 @@ const textEditor = function ($scope, $timeout) {
 		this.modeToUse = this.modeName;
 	};
 
+	this.$onChanges = (changes) => {
+		if (changes.initialText && changes.initialText.currentValue) {
+			this.text = changes.initialText.currentValue;
+		}
+	};
+
 	this.onChange = function () {
 		if (debounceTimeout) {
 			$timeout.cancel(debounceTimeout);
+		}
+
+		if (this.onTextChange) {
+			this.onTextChange({ text: this.text });
 		}
 
 		debounceTimeout = $timeout(() => {
@@ -128,5 +138,7 @@ export default angular
 			tokens: "<",
 			interpreter: "<",
 			grammar: "<",
+			onTextChange: "&", 
+			initialText: "<",
 		},
 	}).name;

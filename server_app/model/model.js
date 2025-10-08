@@ -12,7 +12,8 @@ let model = mongoose.Schema({
 	updated: { type: Date, default: Date.now },
 	model: { type: Object, required: true },
 	type: { type: String, required: true },
-	shareOptions: { type: ShareOptions, required: false }
+	shareOptions: { type: ShareOptions, required: false },
+  textModel: { type: String, required: false, default: '' },
 });
 
 module.exports = mongoose.model("Model", model);

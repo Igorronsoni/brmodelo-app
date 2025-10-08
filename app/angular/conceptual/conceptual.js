@@ -54,6 +54,7 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
 		name: '',
 		type: 'conceptual',
 		model: '',
+		textModel: '',
 		user: $rootScope.loggeduser
 	}
 	ctrl.selectedElement = {};
@@ -91,6 +92,11 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
 			ctrl.showFeedback(true, "Successfully saved!");
 			ctrl.setLoading(false);
 		});
+	}
+
+	ctrl.onEditorTextChange = (text) => {
+		ctrl.model.textModel = text;
+		setIsDirty(true);
 	}
 
 	ctrl.print = () => {
@@ -582,7 +588,9 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
 			ctrl.model = resp.data;
 			ctrl.model.id = resp.data._id;
 			ctrl.model.model = jsonModel;
-			configs.graph.fromJSON(jsonModel);
+      ctrl.model.textModel = resp.data.textModel || '';
+
+      configs.graph.fromJSON(jsonModel);
 			ctrl.modelState.updatedAt = resp.data.updated
 			ctrl.setLoading(false);
 		}).catch((error) => {
