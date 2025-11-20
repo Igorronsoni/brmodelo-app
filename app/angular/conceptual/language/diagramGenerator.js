@@ -36,7 +36,7 @@ class DiagramGenerator {
 
 		const diffs = this._diffModels(this.currentModel, newModel);
 
-    for (const item of diffs.removed) this._removeElement(item);
+		for (const item of diffs.removed) this._removeElement(item);
 		for (const item of diffs.added) this._addElement(item);
 		for (const item of diffs.updated) this._updateElement(item);
 
@@ -111,10 +111,10 @@ class DiagramGenerator {
 			item.data.type +
 			"_" +
 			(item.data.name || item.data.value || item.data.ref);
-    const cellId = this.elements.get(key);
-    const cell = this.graph.getCell(cellId);
+		const cellId = this.elements.get(key);
+		const cell = this.graph.getCell(cellId);
 
-    if (!cell) return;
+		if (!cell) return;
 
 		const links = this.graph.getConnectedLinks(cell);
 		const neighbors = this.graph.getNeighbors(cell);
@@ -126,8 +126,9 @@ class DiagramGenerator {
 			if (
 				neighbor.get("type") === "erd.Attribute" ||
 				neighbor.get("type") === "erd.Key"
-			) neighbor.remove();
-			
+			)
+				neighbor.remove();
+
 			if (neighbor.get("type") === "erd.Relationship") {
 				const relLinks = this.graph.getConnectedLinks(neighbor);
 				const connectedEntities = relLinks
@@ -136,8 +137,8 @@ class DiagramGenerator {
 					.filter((c) => c && c.get("type") === "erd.Entity");
 
 				if (connectedEntities.length === 0) {
-          const relName = neighbor.attributes.attrs.text.text
-          neighbor.remove();
+					const relName = neighbor.attributes.attrs.text.text;
+					neighbor.remove();
 					this.elements.delete("relationship_" + relName);
 				}
 			}
@@ -223,7 +224,7 @@ class DiagramGenerator {
 			});
 
 			this.graph.addCell(rel);
-      
+
 			node.refs.forEach((refs) => {
 				const entityId = this.elements.get("entity_" + refs.name);
 				const assentityId = this.elements.get("assentity_" + refs.name);
@@ -397,14 +398,6 @@ class DiagramGenerator {
 		const virtualBlocks = new Map();
 		this.elements.forEach((blockId, key) => {
 			const block = this.graph.getCell(blockId);
-			console.log(
-				"layout block",
-				key,
-				block,
-				blockId,
-				this.graph,
-				this.elements,
-			);
 			if (!this.validator.isAssociative(block)) return;
 
 			const blockSize = block.size();
@@ -468,11 +461,13 @@ class DiagramGenerator {
 				const rel = this.graph.getCell(relId);
 
 				if (rel && this.validator.isRelationship(rel)) {
-					rel.position(
-						(block.size().width - rel.size().width) / 2,
-						(block.size().height - rel.size().height) / 2,
-						{ parentRelative: true },
-					);
+					const bx = pos.x - block.size().width / 2;
+					const by = pos.y - block.size().height / 2;
+
+					const rx = bx + (block.size().width - rel.size().width) / 2;
+					const ry = by + (block.size().height - rel.size().height) / 2;
+
+					rel.position(rx, ry);
 					rel.toFront();
 				}
 			}
