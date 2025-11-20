@@ -15,26 +15,36 @@ class DiagramGenerator {
 		/** @type {Validator} */
 		this.validator = validator;
 
-		this.elements = new Map();
-		this.currentModel = {
+		this.elements = null;
+		this.currentModel = null;
+	}
+
+	setStructure(model, elements) {
+		this.currentModel = model ?? {
 			entities: {},
 			relationships: {},
 			assentities: {},
 			specializes: {},
 			notes: {},
 		};
+
+		this.elements = new Map(elements);
 	}
 
 	execute(newModel) {
+		if (!this.currentModel || !this.elements) return;
+
 		const diffs = this._diffModels(this.currentModel, newModel);
 
-		for (const item of diffs.removed) this._removeElement(item);
+    for (const item of diffs.removed) this._removeElement(item);
 		for (const item of diffs.added) this._addElement(item);
 		for (const item of diffs.updated) this._updateElement(item);
 
 		this.currentModel = JSON.parse(JSON.stringify(newModel));
 		this._cleanupOrphans();
 		this.applyLayout();
+
+		return { model: this.currentModel, elements: this.elements };
 	}
 
 	_diffModels(oldModel, newModel) {
@@ -101,26 +111,23 @@ class DiagramGenerator {
 			item.data.type +
 			"_" +
 			(item.data.name || item.data.value || item.data.ref);
-		const cell = this.elements.get(key);
+    const cellId = this.elements.get(key);
+    const cell = this.graph.getCell(cellId);
 
-		if (!cell) return;
+    if (!cell) return;
 
 		const links = this.graph.getConnectedLinks(cell);
+		const neighbors = this.graph.getNeighbors(cell);
 
 		links.forEach((link) => {
 			link.remove();
 		});
-
-		const neighbors = this.graph.getNeighbors(cell);
-
-		neighbors.forEach((neighbor) => {
+		neighbors?.forEach((neighbor) => {
 			if (
 				neighbor.get("type") === "erd.Attribute" ||
 				neighbor.get("type") === "erd.Key"
-			) {
-				neighbor.remove();
-				this.elements.delete(neighbor.attr("label/text"));
-			}
+			) neighbor.remove();
+			
 			if (neighbor.get("type") === "erd.Relationship") {
 				const relLinks = this.graph.getConnectedLinks(neighbor);
 				const connectedEntities = relLinks
@@ -129,8 +136,9 @@ class DiagramGenerator {
 					.filter((c) => c && c.get("type") === "erd.Entity");
 
 				if (connectedEntities.length === 0) {
-					neighbor.remove();
-					this.elements.delete(neighbor.attr("label/text"));
+          const relName = neighbor.attributes.attrs.text.text
+          neighbor.remove();
+					this.elements.delete("relationship_" + relName);
 				}
 			}
 		});
@@ -155,10 +163,10 @@ class DiagramGenerator {
 			});
 		}
 
-		this.elements.set(node.type + "_" + node.name, entity);
+		this.elements.set(node.type + "_" + node.name, entity.id);
 	}
 
-	_addAttribute(attr, entity) {
+	_addAttribute(attr, node) {
 		let attrShape;
 		const card = this._create_cardinality(attr.cardinality);
 
@@ -179,7 +187,7 @@ class DiagramGenerator {
 		attrShape.attr("text/text", name);
 
 		this.graph.addCell(attrShape);
-		this.linker.createLink(entity, attrShape, this.graph);
+		this.linker.createLink(node, attrShape, this.graph);
 
 		if (attr.type === "composed") {
 			attrShape.set("composed", true);
@@ -193,10 +201,12 @@ class DiagramGenerator {
 	_addRelationship(node) {
 		let rel;
 		if (node.refs.length == 1) {
-			const ref = this.elements.get(
+			const idRef = this.elements.get(
 				node.refs[0].type + "_" + node.refs[0].name,
 			);
 			const card = this._create_cardinality(node.refs[0].cardinality);
+
+			const ref = this.graph.getCell(idRef);
 
 			rel = this.linker.addAutoRelationship({
 				element: { model: ref },
@@ -213,10 +223,13 @@ class DiagramGenerator {
 			});
 
 			this.graph.addCell(rel);
-
+      
 			node.refs.forEach((refs) => {
-				const entity = this.elements.get("entity_" + refs.name);
-				const assentity = this.elements.get("assentity_" + refs.name);
+				const entityId = this.elements.get("entity_" + refs.name);
+				const assentityId = this.elements.get("assentity_" + refs.name);
+				const entity = this.graph.getCell(entityId);
+				const assentity = this.graph.getCell(assentityId);
+
 				const card = this._create_cardinality(refs.cardinality);
 
 				if (entity || assentity) {
@@ -250,11 +263,12 @@ class DiagramGenerator {
 			});
 		}
 
-		this.elements.set(node.type + "_" + node.name, rel);
+		this.elements.set(node.type + "_" + node.name, rel.id);
 	}
 
 	_addAssEntity(node) {
-		const rel = this.elements.get("relationship_" + node.relationship);
+		const relId = this.elements.get("relationship_" + node.relationship);
+		const rel = this.graph.getCell(relId);
 
 		if (rel) {
 			const block = this.factory.createBlockAssociative({});
@@ -264,7 +278,7 @@ class DiagramGenerator {
 			block.set("type", "erd.Associative");
 
 			rel.toFront();
-			this.elements.set(node.type + "_" + node.relationship, block);
+			this.elements.set(node.type + "_" + node.relationship, block.id);
 		}
 	}
 
@@ -273,19 +287,20 @@ class DiagramGenerator {
 		isa.attributes.attrs.text.text = this._create_notation(node.notation);
 
 		this.graph.addCell(isa);
+		this.elements.set(node.type + "_" + node.ref, isa.id);
 
-		this.elements.set(node.type + "_" + node.ref, isa);
-
-		const reference = this.elements.get("entity_" + node.ref);
-		if (reference) {
+		const referenceId = this.elements.get("entity_" + node.ref);
+		const reference = this.graph.getCell(referenceId);
+		if (referenceId) {
 			this.linker.createLink(isa, reference, this.graph);
+
+			reference.attributes.isExtended = true;
+			isa.attributes.parentId = reference.attributes.id;
 		}
 
-		reference.attributes.isExtended = true;
-		isa.attributes.parentId = reference.attributes.id;
-
 		for (const spec of node.specs) {
-			const child = this.elements.get("entity_" + spec.name);
+			const childId = this.elements.get("entity_" + spec.name);
+			const child = this.graph.getCell(childId);
 			if (child) {
 				this.linker.createLink(isa, child, this.graph);
 			}
@@ -380,7 +395,16 @@ class DiagramGenerator {
 		});
 
 		const virtualBlocks = new Map();
-		this.elements.forEach((block, key) => {
+		this.elements.forEach((blockId, key) => {
+			const block = this.graph.getCell(blockId);
+			console.log(
+				"layout block",
+				key,
+				block,
+				blockId,
+				this.graph,
+				this.elements,
+			);
 			if (!this.validator.isAssociative(block)) return;
 
 			const blockSize = block.size();
@@ -390,7 +414,10 @@ class DiagramGenerator {
 				height: blockSize.height,
 			});
 			virtualBlocks.set(key, virtualId);
-			const rel = this.elements.get(key.replace("assentity_", "relationship_"));
+			const relId = this.elements.get(
+				key.replace("assentity_", "relationship_"),
+			);
+			const rel = this.graph.getCell(relId);
 
 			if (rel && this.validator.isRelationship(rel)) {
 				const connectedLinks = this.graph.getConnectedLinks(rel);
@@ -424,7 +451,8 @@ class DiagramGenerator {
 			}
 		});
 
-		this.elements.forEach((block, key) => {
+		this.elements.forEach((blockId, key) => {
+			const block = this.graph.getCell(blockId);
 			if (!this.validator.isAssociative(block)) return;
 
 			const virtualId = virtualBlocks.get(key);
@@ -434,9 +462,10 @@ class DiagramGenerator {
 					pos.x - block.size().width / 2,
 					pos.y - block.size().height / 2,
 				);
-				const rel = this.elements.get(
+				const relId = this.elements.get(
 					key.replace("assentity_", "relationship_"),
 				);
+				const rel = this.graph.getCell(relId);
 
 				if (rel && this.validator.isRelationship(rel)) {
 					rel.position(

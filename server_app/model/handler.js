@@ -42,20 +42,23 @@ const save = async (req, res) => {
 		const userId = req.body.user;
 		const model = req.body.model;
     const textModel = req.body.textModel || '';
-    
+    const structure = req.body.structure || {};
+    const elements = req.body.elements || "";
+
 		const validation = modelValidator.validateSaveParams({
 			name,
 			type,
 			model,
 			userId,
-      textModel
+      textModel,
+      structure
 		});
 
 		if (!validation.valid) {
 			return res.status(422).send(validation.message);
 		}
 
-		const newModel = await modelService.save({ name, type, model, userId, textModel });
+		const newModel = await modelService.save({ name, type, model, userId, textModel, structure, elements });
 
 		res.send(newModel);
 	} catch (error) {
@@ -71,7 +74,10 @@ const edit = async (req, res) => {
 		const modelId = req.params.modelId;
 		const newModel = req.body.model;
     const newTextModel = req.body.textModel || '';
-		const editedModel = await modelService.edit(modelId, newModel, newTextModel);
+    const newStructure = req.body.structure || {};
+    const newElements = req.body.elements || "";
+
+    const editedModel = await modelService.edit(modelId, newModel, newTextModel, newStructure, newElements);
 		res.send(editedModel);
 	} catch (error) {
 		console.error(error);

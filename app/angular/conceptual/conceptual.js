@@ -55,6 +55,7 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
 		type: 'conceptual',
 		model: '',
 		textModel: '',
+    structure: null,
 		user: $rootScope.loggeduser
 	}
 	ctrl.selectedElement = {};
@@ -65,6 +66,7 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
 		keyboardController: null,
 		selectedElementActions: null
 	};
+  ctrl.textModel = "";
 
 	const setIsDirty = (isDirty) => {
 		ctrl.modelState.isDirty = isDirty;
@@ -88,14 +90,18 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
 		setIsDirty(false);
 		ctrl.setLoading(true);
 		ctrl.model.model = JSON.stringify(configs.graph);
-		ModelAPI.updateModel(ctrl.model).then(function (res) {
+    ctrl.model.structure = JSON.stringify(ctrl.model.structure);
+
+    ctrl.model.elements = JSON.stringify(ctrl.model.elements);
+    ctrl.model.textModel = ctrl.textModel;
+    ModelAPI.updateModel(ctrl.model).then(function (res) {
 			ctrl.showFeedback(true, "Successfully saved!");
 			ctrl.setLoading(false);
 		});
 	}
 
 	ctrl.onEditorTextChange = (text) => {
-		ctrl.model.textModel = text;
+		ctrl.textModel = text;
 		setIsDirty(true);
 	}
 
@@ -141,6 +147,8 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
 				type: model.type,
 				model: model.model,
 				user: model.who,
+        textModel: model.textModel,
+        structure: model.structure
 			};
 			ModelAPI.saveModel(duplicatedModel).then((newModel) => {
 				window.open($state.href('conceptual', { 'modelid': newModel._id }));
@@ -565,7 +573,6 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
 
 	ctrl.$postLink = () => {
 		buildWorkspace();
-    ctrl.generator = new DiagramGenerator(configs.graph, ctrl.shapeFactory, ctrl.shapeLinker, ctrl.shapeValidator)
 	};
 
 	ctrl.$onInit = () => {
@@ -580,7 +587,6 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
     ctrl.grammar = grammar;
     ctrl.semanticInterpreter = new SemanticInterpreter();
     ctrl.transformation = new Transformation();
-    ctrl.generator = null;
 
 		ctrl.setLoading(true);
 		ModelAPI.getModel($stateParams.modelid, $rootScope.loggeduser).then((resp) => {
@@ -588,11 +594,19 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
 			ctrl.model = resp.data;
 			ctrl.model.id = resp.data._id;
 			ctrl.model.model = jsonModel;
+      
       ctrl.model.textModel = resp.data.textModel || '';
+      ctrl.model.structure = (typeof resp.data.structure == "string" && resp.data.structure != "") ? JSON.parse(resp.data.structure) : resp.data.structure;
+      ctrl.model.elements = Object.entries((typeof resp.data.elements == "string" && resp.data.elements != "") ? JSON.parse(resp.data.elements) : {});
 
       configs.graph.fromJSON(jsonModel);
+
+      ctrl.generator = new DiagramGenerator(configs.graph, ctrl.shapeFactory, ctrl.shapeLinker, ctrl.shapeValidator)
+      ctrl.generator.setStructure(ctrl.model.structure, ctrl.model.elements);
+      
 			ctrl.modelState.updatedAt = resp.data.updated
-			ctrl.setLoading(false);
+
+      ctrl.setLoading(false);
 		}).catch((error) => {
 			if(error.status == 404 || error.status == 401) {
 				$state.go("noaccess");
@@ -627,7 +641,11 @@ const controller = function (ModelAPI, $stateParams, $rootScope, $timeout, $uibM
   this.interpreter = function (result) {
     ctrl.semanticInterpreter.execute(result);
     const model = ctrl.transformation.execute(result)
-    ctrl.generator.execute(model);
+    const response = ctrl.generator.execute(model);
+    ctrl.model.structure = response.model;
+
+    const obj = Object.fromEntries(response.elements);
+    ctrl.model.elements = obj;
   };
 };
 

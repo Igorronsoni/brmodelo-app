@@ -10,12 +10,14 @@ const textEditor = function ($scope, $timeout) {
 	this.text = "";
 	let debounceTimeout = null;
 	let clearErrorTimeout = null;
+  this.isReady = true;
 
 	this.$onInit = () => {
 		this.modeName = "customMode_" + Math.random().toString(36).substr(2, 5);
 		this.errors = null;
+    this.isReady = true;
 
-		const tokens = Array.isArray(this.tokens) ? this.tokens : [];
+    const tokens = Array.isArray(this.tokens) ? this.tokens : [];
 
 		CodeMirror.defineSimpleMode(this.modeName, {
 			start: tokens
@@ -71,16 +73,17 @@ const textEditor = function ($scope, $timeout) {
 	this.$onChanges = (changes) => {
 		if (changes.initialText && changes.initialText.currentValue) {
 			this.text = changes.initialText.currentValue;
+      this.isReady = false;
 		}
 	};
 
 	this.onChange = function () {
+    if (!this.isReady) {
+      this.isReady = true;
+      return;
+    }
 		if (debounceTimeout) {
 			$timeout.cancel(debounceTimeout);
-		}
-
-		if (this.onTextChange) {
-			this.onTextChange({ text: this.text });
 		}
 
 		debounceTimeout = $timeout(() => {
@@ -93,6 +96,10 @@ const textEditor = function ($scope, $timeout) {
 					this.errors = null;
 
 					this.interpreter(parser.results[0]);
+
+					if (this.onTextChange) {
+						this.onTextChange({ text: this.text });
+					}
 				} catch (e) {
 					const formatted = this.formatSyntaxErrors(e);
 					this.errors = formatted;
@@ -111,9 +118,9 @@ const textEditor = function ($scope, $timeout) {
 				err.token.text || err.token.value
 			}"`;
 		}
-    if (err.message) {
-      return err.message
-    }
+		if (err.message) {
+			return err.message;
+		}
 		return `Syntax error: Unexpected token "${err.token && err.token.value}"`;
 	};
 
@@ -138,7 +145,7 @@ export default angular
 			tokens: "<",
 			interpreter: "<",
 			grammar: "<",
-			onTextChange: "&", 
+			onTextChange: "&",
 			initialText: "<",
 		},
 	}).name;

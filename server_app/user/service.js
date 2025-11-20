@@ -10,7 +10,7 @@ const login = async ({ username, password }) => {
         "login": username,
         "password": encriptor.Crypto(password, username),
       });
-
+      
       if (userDocument != null) {
         return resolve({
           "userId": userDocument.id,
@@ -68,7 +68,6 @@ const recovery = async (email) => {
       if (recoveredUser != null) {
         return mailSender.recovery(email, recoveryCode)
           .then(response => {
-            console.log(response);
             return resolve(recoveredUser)
           })
           .catch(error => {

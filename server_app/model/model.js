@@ -13,7 +13,10 @@ let model = mongoose.Schema({
 	model: { type: Object, required: true },
 	type: { type: String, required: true },
 	shareOptions: { type: ShareOptions, required: false },
-  textModel: { type: String, required: false, default: '' },
+	textModel: { type: String, required: false, default: '' },
+	structure: { type: Object, required: false, default: null },
+	elements: { type: String, required: false, default: null },
+
 });
 
 module.exports = mongoose.model("Model", model);

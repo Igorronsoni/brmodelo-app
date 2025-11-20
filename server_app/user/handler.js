@@ -16,7 +16,7 @@ const userLogin = async(req, res) => {
     const sessionId = req.sessionID;
 
     const validation = userValitor.validateLoginParams({username, password});
-
+   
     if(!validation.valid) {
       return res.status(422).send(validation.message);
     }

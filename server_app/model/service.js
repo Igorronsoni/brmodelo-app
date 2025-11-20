@@ -42,7 +42,7 @@ const getById = async (modelId, userId) => {
 	});
 };
 
-const save = async ({ name, type, model, userId, textModel }) => {
+const save = async ({ name, type, model, userId, textModel, structure, elements }) => {
 	return new Promise(async (resolve, reject) => {
 		try {
 			const createdModel = await modelRepository.create({
@@ -51,7 +51,9 @@ const save = async ({ name, type, model, userId, textModel }) => {
 				model: model,
 				name: name,
 				updated: Date.now(),
-        textModel: textModel
+        textModel: textModel,
+        structure: structure,
+        elements: elements
 			});
 			return resolve(createdModel);
 		} catch (error) {
@@ -61,12 +63,12 @@ const save = async ({ name, type, model, userId, textModel }) => {
 	});
 };
 
-const edit = async (modelId, model, textModel) => {
+const edit = async (modelId, model, textModel, structure, elements) => {
 	return new Promise(async (resolve, reject) => {
 		try {
 			const response = await modelRepository.findOneAndUpdate(
 				{ _id: modelId },
-				{ $set: { model: model, updated: Date.now(), textModel: textModel } }
+				{ $set: { model: model, updated: Date.now(), textModel: textModel, structure: structure, elements: elements } }
 			);
 			if (response != null) {
 				return resolve(response);
