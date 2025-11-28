@@ -13,7 +13,7 @@ declaration ->  entity_command     {% id %}
 entity_command -> %ENTITY _ identifier _ %LBRACE _ attributes _ %RBRACE {% ([,, name,,,, attrs,,]) => ({
                                                                             type: "entity",
                                                                             name: name,
-                                                                            attributes: attrs
+                                                                            attributes: attrs ?? []
                                                                           }) %}
 
 attributes -> attribute:*  {% (attrs) => attrs.flat() %}

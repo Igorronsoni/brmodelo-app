@@ -35,13 +35,13 @@ class DiagramGenerator {
 		if (!this.currentModel || !this.elements) return;
 
 		const diffs = this._diffModels(this.currentModel, newModel);
-
+    
 		for (const item of diffs.removed) this._removeElement(item);
 		for (const item of diffs.added) this._addElement(item);
 		for (const item of diffs.updated) this._updateElement(item);
 
 		this.currentModel = JSON.parse(JSON.stringify(newModel));
-		this._cleanupOrphans();
+		this._cleanupOrphans(diffs);
 		this.applyLayout();
 
 		return { model: this.currentModel, elements: this.elements };
@@ -157,7 +157,7 @@ class DiagramGenerator {
 		const entity = this.factory.createEntity({});
 		this.graph.addCell(entity);
 		entity.attr("text/text", node.name);
-
+    
 		if (node.attributes && node.attributes.length > 0) {
 			node.attributes.forEach((attr) => {
 				this._addAttribute(attr, entity);
@@ -308,13 +308,20 @@ class DiagramGenerator {
 		}
 	}
 
-	_cleanupOrphans() {
+	_cleanupOrphans(diffs) {
 		const cells = this.graph.getCells();
+		
+		const elementsToRemove = new Set();
+		for (const item of diffs.removed) {
+			const elementName = item.data.name;
+			elementsToRemove.add(elementName);
+		}
 
 		for (const cell of cells) {
 			if (cell.isLink()) continue;
 
 			const connected = this.graph.getConnectedLinks(cell);
+			const cellName = cell.attr("label/text");
 
 			if (this.validator.isAssociative(cell)) continue;
 			if (this.validator.isRelationship(cell)) {
@@ -331,8 +338,8 @@ class DiagramGenerator {
 				}
 			}
 
-			if (connected.length === 0) {
-				const key = cell.attr("label/text") || cell.id;
+			if (connected.length === 0 && elementsToRemove.has(cellName)) {
+				const key = cellName || cell.id;
 				cell.remove();
 				this.elements.delete(key);
 			}
@@ -353,7 +360,7 @@ class DiagramGenerator {
 					);
 				});
 
-				if (!hasParentMain) {
+				if (!hasParentMain && elementsToRemove.has(cellName)) {
 					this._removeSubtree(cell);
 				}
 			}
@@ -396,9 +403,11 @@ class DiagramGenerator {
 		});
 
 		const virtualBlocks = new Map();
+   
 		this.elements.forEach((blockId, key) => {
 			const block = this.graph.getCell(blockId);
-			if (!this.validator.isAssociative(block)) return;
+
+      if (block && !this.validator.isAssociative(block)) return;
 
 			const blockSize = block.size();
 			const virtualId = `block_${key}`;
@@ -411,7 +420,6 @@ class DiagramGenerator {
 				key.replace("assentity_", "relationship_"),
 			);
 			const rel = this.graph.getCell(relId);
-
 			if (rel && this.validator.isRelationship(rel)) {
 				const connectedLinks = this.graph.getConnectedLinks(rel);
 				connectedLinks.forEach((link) => {
@@ -425,7 +433,7 @@ class DiagramGenerator {
 				});
 			}
 		});
-
+    
 		links.forEach((l) => {
 			g.setEdge(l.get("source").id, l.get("target").id);
 		});

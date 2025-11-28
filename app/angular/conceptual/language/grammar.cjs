@@ -61,7 +61,7 @@ var grammar = {
     {"name": "entity_command", "symbols": [(lexer.has("ENTITY") ? {type: "ENTITY"} : ENTITY), "_", "identifier", "_", (lexer.has("LBRACE") ? {type: "LBRACE"} : LBRACE), "_", "attributes", "_", (lexer.has("RBRACE") ? {type: "RBRACE"} : RBRACE)], "postprocess":  ([,, name,,,, attrs,,]) => ({
           type: "entity",
           name: name,
-          attributes: attrs
+          attributes: attrs ?? []
         }) },
     {"name": "attributes$ebnf$1", "symbols": []},
     {"name": "attributes$ebnf$1", "symbols": ["attributes$ebnf$1", "attribute"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
