@@ -41,7 +41,7 @@ class DiagramGenerator {
 		for (const item of diffs.updated) this._updateElement(item);
 
 		this.currentModel = JSON.parse(JSON.stringify(newModel));
-		this._cleanupOrphans(diffs);
+		this._cleanupOrphans();
 		this.applyLayout();
 
 		return { model: this.currentModel, elements: this.elements };
@@ -308,20 +308,13 @@ class DiagramGenerator {
 		}
 	}
 
-	_cleanupOrphans(diffs) {
+	_cleanupOrphans() {
 		const cells = this.graph.getCells();
-		
-		const elementsToRemove = new Set();
-		for (const item of diffs.removed) {
-			const elementName = item.data.name;
-			elementsToRemove.add(elementName);
-		}
 
 		for (const cell of cells) {
 			if (cell.isLink()) continue;
 
 			const connected = this.graph.getConnectedLinks(cell);
-			const cellName = cell.attr("label/text");
 
 			if (this.validator.isAssociative(cell)) continue;
 			if (this.validator.isRelationship(cell)) {
@@ -338,8 +331,8 @@ class DiagramGenerator {
 				}
 			}
 
-			if (connected.length === 0 && elementsToRemove.has(cellName)) {
-				const key = cellName || cell.id;
+			if (connected.length === 0) {
+				const key = cell.attr("label/text") || cell.id;
 				cell.remove();
 				this.elements.delete(key);
 			}
@@ -360,7 +353,7 @@ class DiagramGenerator {
 					);
 				});
 
-				if (!hasParentMain && elementsToRemove.has(cellName)) {
+				if (!hasParentMain) {
 					this._removeSubtree(cell);
 				}
 			}
@@ -406,8 +399,8 @@ class DiagramGenerator {
    
 		this.elements.forEach((blockId, key) => {
 			const block = this.graph.getCell(blockId);
-
-      if (block && !this.validator.isAssociative(block)) return;
+      
+			if (block && !this.validator.isAssociative(block)) return;
 
 			const blockSize = block.size();
 			const virtualId = `block_${key}`;
